@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:technomaths/widgets/animated_buttons.dart';
 import 'package:technomaths/enums/game_mode.dart';
@@ -22,6 +23,7 @@ class _GameScreenState extends State<GameScreen> {
   List<String> options = [];
   int score = 0;
   int correctAnswer = 0;
+  int lives = 3;
 
   @override
   void initState() {
@@ -121,6 +123,12 @@ class _GameScreenState extends State<GameScreen> {
       setState(() {
         score++;
       });
+    } else {
+      if (lives > 0){
+        setState(() {
+          lives--;
+        });
+      }
     }
     // Regardless of whether the answer was correct, generate a new question after a button press
     generateQuestion();
@@ -137,53 +145,127 @@ class _GameScreenState extends State<GameScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage("assets/background.jpg"),
-            fit: BoxFit.cover,
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Center(
-                      child: Text(
-                        'Score: $score',  // Update this line to use the score variable
-                        style: TextStyle(color: Colors.purple, fontSize: 32),
-                      ),
-                    ),
-                    SizedBox(height: 50),
-                    Text(
-                      question,
-                      style: TextStyle(fontSize: 50, color: Colors.purple),
-                    ),
-                    SizedBox(height: 50),
-                    GridView.count(
-                      shrinkWrap: true,
-                      crossAxisCount: 2,
-                      childAspectRatio: 2,
-                      padding: const EdgeInsets.all(20),
-                      mainAxisSpacing: 20,
-                      crossAxisSpacing: 20,
+      body: Stack(
+        children: [
+          // Main game screen
+          Container(
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage("assets/background.jpg"),
+                fit: BoxFit.cover,
+              ),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
-                        AnimatedButton(options[0], onPressed: () => checkAnswer(options[0], correctAnswer)),
-                        AnimatedButton(options[1], onPressed: () => checkAnswer(options[1], correctAnswer)),
-                        AnimatedButton(options[2], onPressed: () => checkAnswer(options[2], correctAnswer)),
-                        AnimatedButton(options[3], onPressed: () => checkAnswer(options[3], correctAnswer)),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(lives, (index) => Icon(Icons.favorite, color: Colors.purple, size: 40)).toList(),
+                        ),
+                        SizedBox(height: 50),
+                        Center(
+                          child: Text(
+                            'Score: $score',
+                            style: TextStyle(color: Colors.purple, fontSize: 32),
+                          ),
+                        ),
+                        SizedBox(height: 50),
+                        Text(
+                          question,
+                          style: TextStyle(fontSize: 50, color: Colors.purple),
+                        ),
+                        SizedBox(height: 50),
+                        GridView.count(
+                          shrinkWrap: true,
+                          crossAxisCount: 2,
+                          childAspectRatio: 2,
+                          padding: const EdgeInsets.all(20),
+                          mainAxisSpacing: 20,
+                          crossAxisSpacing: 20,
+                          children: <Widget>[
+                            AnimatedButton(options[0], onPressed: () => checkAnswer(options[0],correctAnswer)),
+                            AnimatedButton(options[1], onPressed: () => checkAnswer(options[1],correctAnswer)),
+                            AnimatedButton(options[2], onPressed: () => checkAnswer(options[2],correctAnswer)),
+                            AnimatedButton(options[3], onPressed: () => checkAnswer(options[3],correctAnswer)),
+                          ],
+                        ),
                       ],
                     ),
-                  ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Game Over overlay
+          if (lives == 0) ...[
+            BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+              child: Container(
+                color: Colors.black.withOpacity(0.4),
+              ),
+            ),
+            Center(
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.8, // 80% of screen width
+                child: AlertDialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  backgroundColor: Colors.white,
+                  title: Text('Game Over', textAlign: TextAlign.center, style: TextStyle(color: Colors.red, fontSize: 32)),
+                  content: SingleChildScrollView(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        Text('Your Name', textAlign: TextAlign.center,),
+                        TextField(
+                          textAlign: TextAlign.center,
+                        ),  // User can enter their name here
+                        SizedBox(height: 20),
+                        Text('Your Score: $score', textAlign: TextAlign.center, style: TextStyle(color: Colors.purple, fontSize: 24)),
+                        SizedBox(height: 20),
+                        Text('Best Score: $score', textAlign: TextAlign.center, style: TextStyle(color: Colors.purple, fontSize: 24)),  // Keeping current score as best score for now
+                        SizedBox(height: 30),
+                        ElevatedButton(
+                          onPressed: () {},  // Add functionality to restart the game
+                          child: Text('Retry', style: TextStyle(color: Colors.white)),
+                          style: ElevatedButton.styleFrom(
+                            primary: Colors.purple, // This replaces the 'color' property
+                            minimumSize: Size(MediaQuery.of(context).size.width * 0.4, 50), // Button size is 40% of screen width and has a fixed height of 50.
+                          ),
+                        ),
+                        SizedBox(height: 20),
+                        ElevatedButton(
+                          onPressed: () {},  // Add functionality to go to Wall of Fame
+                          child: Text('Wall of Fame', style: TextStyle(color: Colors.white)),
+                          style: ElevatedButton.styleFrom(
+                            primary: Colors.purple, // This replaces the 'color' property
+                            minimumSize: Size(MediaQuery.of(context).size.width * 0.4, 50), // Button size is 40% of screen width and has a fixed height of 50.
+                          ),
+                        ),
+                        SizedBox(height: 20),
+                        ElevatedButton(
+                          onPressed: () {},  // Add functionality to go to Rate screen
+                          child: Text('Rate the Game', style: TextStyle(color: Colors.white)),
+                          style: ElevatedButton.styleFrom(
+                            primary: Colors.purple, // This replaces the 'color' property
+                            minimumSize: Size(MediaQuery.of(context).size.width * 0.4, 50), // Button size is 40% of screen width and has a fixed height of 50.
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
-          ],
-        ),
+          ]
+        ],
       ),
     );
   }
