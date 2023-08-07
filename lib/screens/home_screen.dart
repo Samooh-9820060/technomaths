@@ -1,0 +1,51 @@
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:technomaths/widgets/animated_buttons.dart';
+import 'package:flutter/services.dart'; // Required for SystemNavigator
+import 'package:technomaths/screens/endless_mode_screen.dart'; // Add this import
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage("assets/background.jpg"),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Text(
+                'TechnoMaths',
+                style: GoogleFonts.fredoka(fontSize: 40, color: Colors.purple),
+              ),
+              SizedBox(height: 50), // Add this for extra space
+              AnimatedButton('Start Endless', onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => EndlessModeScreen()),
+                );
+              }),
+              AnimatedButton('Levels', onPressed: () {
+                // Code to go to the levels
+              }),
+              AnimatedButton('Wall of Fame', onPressed: () {
+                // Code to go to the wall of fame
+              }),
+              AnimatedButton('Quit', onPressed: () {
+                // Code to quit the app
+                SystemNavigator.pop();
+              }),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
