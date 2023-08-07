@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';  // import this
 import 'package:technomaths/widgets/animated_buttons.dart';
+import 'package:technomaths/screens/game_screen.dart';
+import 'package:technomaths/enums/game_mode.dart';
+import 'package:technomaths/enums/game_speed.dart';
+import 'package:technomaths/enums/number_length.dart';
+
 
 class EndlessModeScreen extends StatelessWidget {
   const EndlessModeScreen({Key? key}) : super(key: key);
@@ -25,16 +30,64 @@ class EndlessModeScreen extends StatelessWidget {
               ),
               SizedBox(height: 30),
               AnimatedButton('Addition', onPressed: () {
-                // Code to start Addition mode
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => GameScreen(
+                        gameMode: GameMode.Addition,
+                        gameSpeed: GameSpeed.Slow,
+                        numberLength: NumberLength.Short
+                    ),
+                  ),
+                );
               }),
               AnimatedButton('Subtraction', onPressed: () {
-                // Code to start Subtraction mode
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => GameScreen(
+                        gameMode: GameMode.Subtraction,
+                        gameSpeed: GameSpeed.Slow,
+                        numberLength: NumberLength.Short
+                    ),
+                  ),
+                );
               }),
               AnimatedButton('Multiplication', onPressed: () {
-                // Code to start Multiplication mode
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => GameScreen(
+                        gameMode: GameMode.Multiplication,
+                        gameSpeed: GameSpeed.Slow,
+                        numberLength: NumberLength.Short
+                    ),
+                  ),
+                );
+              }),
+              AnimatedButton('Division', onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => GameScreen(
+                        gameMode: GameMode.Division,
+                        gameSpeed: GameSpeed.Slow,
+                        numberLength: NumberLength.Short
+                    ),
+                  ),
+                );
               }),
               AnimatedButton('All', onPressed: () {
-                // Code to start All mode
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => GameScreen(
+                        gameMode: GameMode.All,
+                        gameSpeed: GameSpeed.Slow,
+                        numberLength: NumberLength.Short
+                    ),
+                  ),
+                );
               }),
               AnimatedButton('Back', onPressed: () {
                 Navigator.pop(context);  // Go back to the previous screen
