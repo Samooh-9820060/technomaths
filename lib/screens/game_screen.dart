@@ -20,6 +20,8 @@ class GameScreen extends StatefulWidget {
 class _GameScreenState extends State<GameScreen> {
   String question = '';
   List<String> options = [];
+  int score = 0;
+  int correctAnswer = 0;
 
   @override
   void initState() {
@@ -29,7 +31,7 @@ class _GameScreenState extends State<GameScreen> {
 
   void generateQuestion() {
     var rng = new Random();
-    int number1, number2, correctAnswer;
+    int number1, number2;
     String operator;
 
     switch(widget.numberLength) {
@@ -113,6 +115,17 @@ class _GameScreenState extends State<GameScreen> {
     return optionsList;
   }
 
+  // Add a checkAnswer function to update the score
+  void checkAnswer(String selectedOption, int correctAnswer) {
+    if (selectedOption == correctAnswer.toString()) {
+      setState(() {
+        score++;
+      });
+    }
+    // Regardless of whether the answer was correct, generate a new question after a button press
+    generateQuestion();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -141,7 +154,7 @@ class _GameScreenState extends State<GameScreen> {
                   children: <Widget>[
                     Center(
                       child: Text(
-                        'Score: 0',
+                        'Score: $score',  // Update this line to use the score variable
                         style: TextStyle(color: Colors.purple, fontSize: 32),
                       ),
                     ),
@@ -159,10 +172,10 @@ class _GameScreenState extends State<GameScreen> {
                       mainAxisSpacing: 20,
                       crossAxisSpacing: 20,
                       children: <Widget>[
-                        AnimatedButton(options[0], onPressed: () {}),
-                        AnimatedButton(options[1], onPressed: () {}),
-                        AnimatedButton(options[2], onPressed: () {}),
-                        AnimatedButton(options[3], onPressed: () {}),
+                        AnimatedButton(options[0], onPressed: () => checkAnswer(options[0], correctAnswer)),
+                        AnimatedButton(options[1], onPressed: () => checkAnswer(options[1], correctAnswer)),
+                        AnimatedButton(options[2], onPressed: () => checkAnswer(options[2], correctAnswer)),
+                        AnimatedButton(options[3], onPressed: () => checkAnswer(options[3], correctAnswer)),
                       ],
                     ),
                   ],
