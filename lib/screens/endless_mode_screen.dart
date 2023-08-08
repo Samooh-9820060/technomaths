@@ -13,13 +13,15 @@ class EndlessModeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage("assets/background.jpg"), // Assuming you have a background image in your assets
-            fit: BoxFit.cover,
-          ),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.purple, size: 30),
+          onPressed: () => Navigator.pop(context),
         ),
+      ),
+      body: Container(
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -28,7 +30,7 @@ class EndlessModeScreen extends StatelessWidget {
                 'Choose Endless Mode',
                 style: GoogleFonts.fredoka(fontSize: 30, color: Colors.purple), // Use Google font here
               ),
-              SizedBox(height: 30),
+              SizedBox(height: 50),
               AnimatedButton('Addition', onPressed: () {
                 Navigator.push(
                   context,
@@ -88,9 +90,6 @@ class EndlessModeScreen extends StatelessWidget {
                     ),
                   ),
                 );
-              }),
-              AnimatedButton('Back', onPressed: () {
-                Navigator.pop(context);  // Go back to the previous screen
               }),
             ],
           ),

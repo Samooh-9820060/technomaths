@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:technomaths/widgets/animated_buttons.dart';
 import 'package:technomaths/enums/game_mode.dart';
 import 'package:technomaths/enums/game_speed.dart';
@@ -229,7 +230,7 @@ class _GameScreenState extends State<GameScreen> {
                             // Timer Text
                             Text(
                               '$remainingTime s',
-                              style: TextStyle(
+                              style: GoogleFonts.aBeeZee(
                                 color: Colors.purple[700],
                                 fontWeight: FontWeight.bold,
                                 fontSize: 20,
@@ -267,13 +268,13 @@ class _GameScreenState extends State<GameScreen> {
                         Center(
                           child: Text(
                             'Score: $score',
-                            style: TextStyle(color: Colors.purple, fontSize: 32),
+                            style: GoogleFonts.fredoka(color: Colors.purple, fontSize: 32),
                           ),
                         ),
                         SizedBox(height: 50),
                         Text(
                           question,
-                          style: TextStyle(fontSize: 50, color: Colors.purple),
+                          style: GoogleFonts.fredoka(fontSize: 50, color: Colors.purple),
                         ),
                         SizedBox(height: 30),
                         GridView.count(
@@ -313,7 +314,7 @@ class _GameScreenState extends State<GameScreen> {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   backgroundColor: Colors.white,
-                  title: Text('Game Over', textAlign: TextAlign.center, style: TextStyle(color: Colors.red, fontSize: 32)),
+                  title: Text('Game Over', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: Colors.red, fontSize: 32)),
                   content: SingleChildScrollView(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -324,9 +325,9 @@ class _GameScreenState extends State<GameScreen> {
                           textAlign: TextAlign.center,
                         ),  // User can enter their name here
                         SizedBox(height: 20),
-                        Text('Your Score: $score', textAlign: TextAlign.center, style: TextStyle(color: Colors.purple, fontSize: 24)),
+                        Text('Your Score: $score', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: Colors.purple, fontSize: 24)),
                         SizedBox(height: 20),
-                        Text('Best Score: $score', textAlign: TextAlign.center, style: TextStyle(color: Colors.purple, fontSize: 24)),  // Keeping current score as best score for now
+                        Text('Best Score: $score', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: Colors.purple, fontSize: 24)),  // Keeping current score as best score for now
                         SizedBox(height: 30),
                         ElevatedButton(
                           onPressed: () {
@@ -341,7 +342,7 @@ class _GameScreenState extends State<GameScreen> {
                               ),
                             );
                           },
-                          child: Text('Retry', style: TextStyle(color: Colors.white)),
+                          child: Text('Retry', style: GoogleFonts.fredoka(color: Colors.white)),
                           style: ElevatedButton.styleFrom(
                             primary: Colors.purple, // This replaces the 'color' property
                             minimumSize: Size(MediaQuery.of(context).size.width * 0.4, 50), // Button size is 40% of screen width and has a fixed height of 50.
@@ -350,7 +351,7 @@ class _GameScreenState extends State<GameScreen> {
                         SizedBox(height: 20),
                         ElevatedButton(
                           onPressed: () {},  // Add functionality to go to Wall of Fame
-                          child: Text('Wall of Fame', style: TextStyle(color: Colors.white)),
+                          child: Text('Wall of Fame', style: GoogleFonts.fredoka(color: Colors.white)),
                           style: ElevatedButton.styleFrom(
                             primary: Colors.purple, // This replaces the 'color' property
                             minimumSize: Size(MediaQuery.of(context).size.width * 0.4, 50), // Button size is 40% of screen width and has a fixed height of 50.
@@ -359,7 +360,7 @@ class _GameScreenState extends State<GameScreen> {
                         SizedBox(height: 20),
                         ElevatedButton(
                           onPressed: () {},  // Add functionality to go to Rate screen
-                          child: Text('Rate the Game', style: TextStyle(color: Colors.white)),
+                          child: Text('Rate the Game', style: GoogleFonts.fredoka(color: Colors.white)),
                           style: ElevatedButton.styleFrom(
                             primary: Colors.purple, // This replaces the 'color' property
                             minimumSize: Size(MediaQuery.of(context).size.width * 0.4, 50), // Button size is 40% of screen width and has a fixed height of 50.
