@@ -13,7 +13,12 @@ class GameScreen extends StatefulWidget {
   final GameSpeed gameSpeed;
   final NumberLength numberLength;
 
-  GameScreen({Key? key, required this.gameMode, required this.gameSpeed, required this.numberLength}) : super(key: key);
+  GameScreen({
+    Key? key,
+    required this.gameMode,
+    required this.gameSpeed,
+    required this.numberLength
+  }) : super(key: key);
 
   @override
   _GameScreenState createState() => _GameScreenState();
@@ -324,7 +329,18 @@ class _GameScreenState extends State<GameScreen> {
                         Text('Best Score: $score', textAlign: TextAlign.center, style: TextStyle(color: Colors.purple, fontSize: 24)),  // Keeping current score as best score for now
                         SizedBox(height: 30),
                         ElevatedButton(
-                          onPressed: () {},  // Add functionality to restart the game
+                          onPressed: () {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => GameScreen(
+                                  gameMode: widget.gameMode,
+                                  gameSpeed: widget.gameSpeed,
+                                  numberLength: widget.numberLength,
+                                ),
+                              ),
+                            );
+                          },
                           child: Text('Retry', style: TextStyle(color: Colors.white)),
                           style: ElevatedButton.styleFrom(
                             primary: Colors.purple, // This replaces the 'color' property
