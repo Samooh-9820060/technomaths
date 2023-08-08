@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AnimatedButton extends StatelessWidget {
   final String text;
@@ -25,7 +26,7 @@ class AnimatedButton extends StatelessWidget {
           onPressed: onPressed,
           child: Text(
             text,
-            style: TextStyle(fontSize: 20),
+            style: GoogleFonts.fredoka(fontSize: 20, color: Colors.white),
           ),
         ),
       ),
