@@ -37,8 +37,8 @@ class EndlessModeScreen extends StatelessWidget {
                   MaterialPageRoute(
                     builder: (context) => GameScreen(
                         gameMode: GameMode.Addition,
-                        gameSpeed: GameSpeed.Slow,
-                        numberLength: NumberLength.Short
+                        gameSpeed: GameSpeed.fifteen,
+                        numberLength: NumberLength.one
                     ),
                   ),
                 );
@@ -49,8 +49,8 @@ class EndlessModeScreen extends StatelessWidget {
                   MaterialPageRoute(
                     builder: (context) => GameScreen(
                         gameMode: GameMode.Subtraction,
-                        gameSpeed: GameSpeed.Slow,
-                        numberLength: NumberLength.Short
+                        gameSpeed: GameSpeed.fifteen,
+                        numberLength: NumberLength.one
                     ),
                   ),
                 );
@@ -61,8 +61,8 @@ class EndlessModeScreen extends StatelessWidget {
                   MaterialPageRoute(
                     builder: (context) => GameScreen(
                         gameMode: GameMode.Multiplication,
-                        gameSpeed: GameSpeed.Slow,
-                        numberLength: NumberLength.Short
+                        gameSpeed: GameSpeed.fifteen,
+                        numberLength: NumberLength.one
                     ),
                   ),
                 );
@@ -73,8 +73,8 @@ class EndlessModeScreen extends StatelessWidget {
                   MaterialPageRoute(
                     builder: (context) => GameScreen(
                         gameMode: GameMode.Division,
-                        gameSpeed: GameSpeed.Slow,
-                        numberLength: NumberLength.Short
+                        gameSpeed: GameSpeed.fifteen,
+                        numberLength: NumberLength.one
                     ),
                   ),
                 );
@@ -85,8 +85,8 @@ class EndlessModeScreen extends StatelessWidget {
                   MaterialPageRoute(
                     builder: (context) => GameScreen(
                         gameMode: GameMode.All,
-                        gameSpeed: GameSpeed.Slow,
-                        numberLength: NumberLength.Short
+                        gameSpeed: GameSpeed.fifteen,
+                        numberLength: NumberLength.one
                     ),
                   ),
                 );

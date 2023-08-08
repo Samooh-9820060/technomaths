@@ -10,9 +10,9 @@ import 'package:technomaths/enums/number_length.dart';
 
 
 class GameScreen extends StatefulWidget {
-  final GameMode gameMode;
-  final GameSpeed gameSpeed;
-  final NumberLength numberLength;
+  GameMode gameMode;
+  GameSpeed gameSpeed;
+  NumberLength numberLength;
 
   GameScreen({
     Key? key,
@@ -31,8 +31,9 @@ class _GameScreenState extends State<GameScreen> {
   int score = 0;
   int correctAnswer = 0;
   int lives = 3;
-  int remainingTime = 10;
+  int remainingTime = 0;
   Timer? timer;
+  int level = 1;
   Key key = UniqueKey();
 
   @override
@@ -45,6 +46,74 @@ class _GameScreenState extends State<GameScreen> {
   void dispose() {
     timer?.cancel();
     super.dispose();
+  }
+
+
+
+  void increaseDifficulty() {
+    switch (level) {
+      case 1:
+        widget.numberLength = NumberLength.one;
+        widget.gameSpeed = GameSpeed.fifteen;
+        break;
+      case 2:
+        widget.numberLength = NumberLength.two;
+        break;
+      case 3:
+        widget.gameSpeed = GameSpeed.fourteen;
+        break;
+      case 4:
+        widget.gameSpeed = GameSpeed.thirteen;
+        break;
+      case 5:
+        widget.gameSpeed = GameSpeed.twelve;
+        break;
+      case 6:
+        widget.numberLength = NumberLength.three;
+        break;
+      case 7:
+        widget.gameSpeed = GameSpeed.eleven;
+        break;
+      case 8:
+        widget.gameSpeed = GameSpeed.ten;
+        break;
+      case 9:
+        widget.gameSpeed = GameSpeed.nine;
+        break;
+      case 10:
+        widget.gameSpeed = GameSpeed.eight;
+        break;
+      case 11:
+        widget.numberLength = NumberLength.four;
+        break;
+      case 12:
+        widget.gameSpeed = GameSpeed.seven;
+        break;
+      case 13:
+        widget.gameSpeed = GameSpeed.six;
+        break;
+      case 14:
+        widget.numberLength = NumberLength.five;
+        break;
+      case 15:
+        widget.gameSpeed = GameSpeed.five;
+        break;
+      case 16:
+        widget.gameSpeed = GameSpeed.four;
+        break;
+      case 16:
+        widget.gameSpeed = GameSpeed.three;
+        break;
+      case 16:
+        widget.gameSpeed = GameSpeed.two;
+        break;
+      case 16:
+        widget.gameSpeed = GameSpeed.one;
+        break;
+      default:
+      // Handle cases beyond this, if necessary
+        break;
+    }
   }
 
   void generateQuestion() {
@@ -60,17 +129,25 @@ class _GameScreenState extends State<GameScreen> {
     String operator;
 
     switch(widget.numberLength) {
-      case NumberLength.Short:
-        number1 = rng.nextInt(10) + 1;
-        number2 = rng.nextInt(10) + 1;
+      case NumberLength.one:
+        number1 = rng.nextInt(9) + 1;
+        number2 = rng.nextInt(9) + 1;
         break;
-      case NumberLength.Medium:
-        number1 = rng.nextInt(100) + 1;
-        number2 = rng.nextInt(100) + 1;
+      case NumberLength.two:
+        number1 = rng.nextInt(99) + 1;
+        number2 = rng.nextInt(99) + 1;
         break;
-      case NumberLength.Long:
-        number1 = rng.nextInt(1000) + 1;
-        number2 = rng.nextInt(1000) + 1;
+      case NumberLength.three:
+        number1 = rng.nextInt(999) + 1;
+        number2 = rng.nextInt(999) + 1;
+        break;
+      case NumberLength.four:
+        number1 = rng.nextInt(9999) + 1;
+        number2 = rng.nextInt(9999) + 1;
+        break;
+      case NumberLength.five:
+        number1 = rng.nextInt(99999) + 1;
+        number2 = rng.nextInt(99999) + 1;
         break;
     }
 
@@ -152,6 +229,12 @@ class _GameScreenState extends State<GameScreen> {
       setState(() {
         score++;
       });
+
+      if (score % 10 == 0) { // Every 10th score, level up
+        level++;
+        increaseDifficulty();
+      }
+
       generateQuestion();
     } else {
       setState(() {
@@ -165,8 +248,63 @@ class _GameScreenState extends State<GameScreen> {
     }
   }
 
+  void updateRemainingTime(){
+    switch(widget.gameSpeed) {
+      case GameSpeed.fifteen:
+        remainingTime = 15;
+        break;
+      case GameSpeed.fourteen:
+        remainingTime = 14;
+        break;
+      case GameSpeed.thirteen:
+        remainingTime = 13;
+        break;
+      case GameSpeed.twelve:
+        remainingTime = 12;
+        break;
+      case GameSpeed.eleven:
+        remainingTime = 11;
+        break;
+      case GameSpeed.ten:
+        remainingTime = 10;
+        break;
+      case GameSpeed.nine:
+        remainingTime = 9;
+        break;
+      case GameSpeed.eight:
+        remainingTime = 8;
+        break;
+      case GameSpeed.seven:
+        remainingTime = 7;
+        break;
+      case GameSpeed.six:
+        remainingTime = 6;
+        break;
+      case GameSpeed.five:
+        remainingTime = 5;
+        break;
+      case GameSpeed.four:
+        remainingTime = 4;
+        break;
+      case GameSpeed.three:
+        remainingTime = 3;
+        break;
+      case GameSpeed.two:
+        remainingTime = 2;
+        break;
+      case GameSpeed.one:
+        remainingTime = 1;
+        break;
+      default:
+      // Handle any unexpected cases here
+        break;
+    }
+  }
+
   void startTimer() {
-    remainingTime = 10; // Reset the remaining time
+
+    updateRemainingTime();
+
     key = UniqueKey(); // Generate a new Key
 
     const oneSec = const Duration(seconds: 1);
@@ -336,8 +474,8 @@ class _GameScreenState extends State<GameScreen> {
                               MaterialPageRoute(
                                 builder: (context) => GameScreen(
                                   gameMode: widget.gameMode,
-                                  gameSpeed: widget.gameSpeed,
-                                  numberLength: widget.numberLength,
+                                  gameSpeed: GameSpeed.fifteen,
+                                  numberLength: NumberLength.one,
                                 ),
                               ),
                             );
