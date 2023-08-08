@@ -45,6 +45,10 @@ class _GameScreenState extends State<GameScreen> {
     //cancel the old timer if its still running
     timer?.cancel();
 
+    if (lives <= 0) {
+      return;
+    }
+
     var rng = new Random();
     int number1, number2;
     String operator;
@@ -64,7 +68,7 @@ class _GameScreenState extends State<GameScreen> {
         break;
     }
 
-    List<String> operators = ['+', '-', '*', '/'];
+    List<String> operators = ['+', '-', '×', '÷'];
 
     switch(widget.gameMode) {
       case GameMode.Addition:
@@ -76,11 +80,11 @@ class _GameScreenState extends State<GameScreen> {
         correctAnswer = number1 - number2;
         break;
       case GameMode.Multiplication:
-        operator = '*';
+        operator = '×';
         correctAnswer = number1 * number2;
         break;
       case GameMode.Division:
-        operator = '/';
+        operator = '÷';
         correctAnswer = (number1 / number2).floor();  // If it's division, take the floor (integer part) of the division
         break;
       case GameMode.All: // In case of 'All', pick a random operator
@@ -106,9 +110,9 @@ class _GameScreenState extends State<GameScreen> {
         return number1 + number2;
       case '-':
         return number1 - number2;
-      case '*':
+      case '×':
         return number1 * number2;
-      case '/':
+      case '÷':
         return (number1 / number2).floor();
       default:
         return 0;
@@ -142,16 +146,17 @@ class _GameScreenState extends State<GameScreen> {
       setState(() {
         score++;
       });
+      generateQuestion();
     } else {
+      setState(() {
+        lives--;
+      });
+
+      // If game isn't over, generate a new question
       if (lives > 0){
-        setState(() {
-          lives--;
-        });
+        generateQuestion();
       }
     }
-
-    // Generate a new question which will also start a new timer
-    generateQuestion();
   }
 
   void startTimer() {
@@ -175,11 +180,18 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void endOfTimer() {
-    if(lives > 0) {
-      lives--;
-      generateQuestion(); // Generate a new question which will also start a new timer
-    } else {
-      // If there are no lives left, just cancel the timer without generating a new question
+    if(lives > 1) {
+      setState(() {
+        lives--;
+      });
+      generateQuestion();
+    } else if (lives == 1) { // This condition will handle when lives are exactly 1
+      setState(() {
+        lives = 0; // Ensure lives are set to 0
+      });
+      timer?.cancel();
+    }
+    else {
       timer?.cancel();
     }
   }
@@ -207,19 +219,41 @@ class _GameScreenState extends State<GameScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
-                        TweenAnimationBuilder(
-                          key: key, // Use the Key here
-                          tween: Tween(begin: 1.0, end: 0.0),
-                          duration: Duration(seconds: remainingTime),
-                          builder: (context, value, child) {
-                            return LinearProgressIndicator(
-                              value: value,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.purple),
-                              backgroundColor: Colors.grey,
-                            );
-                          },
+                        Column(
+                          children: [
+                            // Timer Text
+                            Text(
+                              '$remainingTime s',
+                              style: TextStyle(
+                                color: Colors.purple[700],
+                                fontWeight: FontWeight.bold,
+                                fontSize: 20,
+                              ),
+                            ),
+                            // Spacer for a gap between text and progress bar
+                            SizedBox(height: 10),
+                            // Progress bar
+                            Container(
+                              padding: EdgeInsets.symmetric(horizontal: 20), // Padding for wider bar
+                              height: 30, // Height for progress bar
+                              child: TweenAnimationBuilder(
+                                key: key,
+                                tween: Tween(begin: 1.0, end: 0.0),
+                                duration: Duration(seconds: remainingTime),
+                                builder: (context, value, child) {
+                                  return LinearProgressIndicator(
+                                    value: value,
+                                    minHeight: 30, // Increase height of progress bar
+                                    backgroundColor: Colors.grey[300],
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.purple[700]!),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
                         ),
-                        SizedBox(height: 10),
+
+                        SizedBox(height: 30),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: List.generate(lives, (index) => Icon(Icons.favorite, color: Colors.purple, size: 40)).toList(),
@@ -236,7 +270,7 @@ class _GameScreenState extends State<GameScreen> {
                           question,
                           style: TextStyle(fontSize: 50, color: Colors.purple),
                         ),
-                        SizedBox(height: 50),
+                        SizedBox(height: 30),
                         GridView.count(
                           shrinkWrap: true,
                           crossAxisCount: 2,
