@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -24,6 +25,9 @@ class _GameScreenState extends State<GameScreen> {
   int score = 0;
   int correctAnswer = 0;
   int lives = 3;
+  int remainingTime = 10;
+  Timer? timer;
+  Key key = UniqueKey();
 
   @override
   void initState() {
@@ -31,7 +35,16 @@ class _GameScreenState extends State<GameScreen> {
     generateQuestion();
   }
 
+  @override
+  void dispose() {
+    timer?.cancel();
+    super.dispose();
+  }
+
   void generateQuestion() {
+    //cancel the old timer if its still running
+    timer?.cancel();
+
     var rng = new Random();
     int number1, number2;
     String operator;
@@ -81,6 +94,9 @@ class _GameScreenState extends State<GameScreen> {
     setState(() {
       question = '$number1 $operator $number2';
     });
+
+    // After generating a new question, start the timer again
+    startTimer();
   }
 
   // A function to calculate the correct answer
@@ -119,6 +135,9 @@ class _GameScreenState extends State<GameScreen> {
 
   // Add a checkAnswer function to update the score
   void checkAnswer(String selectedOption, int correctAnswer) {
+    // Cancel the timer regardless of the correctness of the answer
+    timer?.cancel();
+
     if (selectedOption == correctAnswer.toString()) {
       setState(() {
         score++;
@@ -130,8 +149,39 @@ class _GameScreenState extends State<GameScreen> {
         });
       }
     }
-    // Regardless of whether the answer was correct, generate a new question after a button press
+
+    // Generate a new question which will also start a new timer
     generateQuestion();
+  }
+
+  void startTimer() {
+    remainingTime = 10; // Reset the remaining time
+    key = UniqueKey(); // Generate a new Key
+
+    const oneSec = const Duration(seconds: 1);
+    timer = Timer.periodic(
+      oneSec,
+          (Timer timer) => setState(
+            () {
+          if (remainingTime <= 0) {
+            timer.cancel();
+            endOfTimer();
+          } else {
+            remainingTime -= 1;
+          }
+        },
+      ),
+    );
+  }
+
+  void endOfTimer() {
+    if(lives > 0) {
+      lives--;
+      generateQuestion(); // Generate a new question which will also start a new timer
+    } else {
+      // If there are no lives left, just cancel the timer without generating a new question
+      timer?.cancel();
+    }
   }
 
   @override
@@ -149,12 +199,6 @@ class _GameScreenState extends State<GameScreen> {
         children: [
           // Main game screen
           Container(
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage("assets/background.jpg"),
-                fit: BoxFit.cover,
-              ),
-            ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
@@ -163,6 +207,19 @@ class _GameScreenState extends State<GameScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
+                        TweenAnimationBuilder(
+                          key: key, // Use the Key here
+                          tween: Tween(begin: 1.0, end: 0.0),
+                          duration: Duration(seconds: remainingTime),
+                          builder: (context, value, child) {
+                            return LinearProgressIndicator(
+                              value: value,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.purple),
+                              backgroundColor: Colors.grey,
+                            );
+                          },
+                        ),
+                        SizedBox(height: 10),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: List.generate(lives, (index) => Icon(Icons.favorite, color: Colors.purple, size: 40)).toList(),
