@@ -435,22 +435,17 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                         ),
                         SizedBox(height: 50),
                         Center(
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min, // To minimize the width of the row
-                            children: [
-                              Text(
-                                'Score: $score',
-                                style: GoogleFonts.fredoka(color: Colors.purple, fontSize: 32),
-                              ),
-                              SizedBox(width: 10), // A small space between the score and the '+1'
-                              FadeTransition(
-                                opacity: _scoreAnimation,
-                                child: Text(
-                                  '+1',
-                                  style: GoogleFonts.fredoka(color: Colors.green, fontSize: 32), // Made it a bit smaller
-                                ),
-                              ),
-                            ],
+                          child: Text(
+                            'Score: $score',
+                            style: GoogleFonts.fredoka(color: Colors.purple, fontSize: 32),
+                          ),
+                        ),
+// Animated score pop-up
+                        FadeTransition(
+                          opacity: _scoreAnimation,
+                          child: Text(
+                            '+1',
+                            style: GoogleFonts.fredoka(color: Colors.green, fontSize: 32),
                           ),
                         ),
 
