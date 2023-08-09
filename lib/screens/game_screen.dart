@@ -10,6 +10,8 @@ import 'package:technomaths/widgets/animated_buttons.dart';
 import 'package:technomaths/enums/game_mode.dart';
 import 'package:technomaths/enums/game_speed.dart';
 
+import '../database/database_helper.dart';
+
 
 class GameScreen extends StatefulWidget {
   GameMode gameMode;
@@ -36,7 +38,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   int maxNumber = 9;
   Duration totalTime = Duration(seconds: 0);
   Timer? totalGameTimer;
-
+  int dataSaved = 0;
 
   Key key = UniqueKey();
   // Check if the device can vibrate
@@ -56,6 +58,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
         duration: Duration(milliseconds: 1000), vsync: this);
     _scoreAnimation = Tween<double>(begin: 0, end: 1).animate(_scoreController);
     startTotalGameTimer();
+    dataSaved = 0;
   }
 
   String getReadableTime(Duration duration) {
@@ -394,6 +397,24 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     }
   }
 
+  void _saveGameData() async {
+    if (_nameController.text.trim().isNotEmpty && dataSaved == 0) {
+      Map<String, dynamic> row = {
+        DatabaseHelper.columnName: _nameController.text,
+        DatabaseHelper.columnScore: score,
+        DatabaseHelper.columnGameMode: widget.gameMode.toString(),
+        DatabaseHelper.columnTimeElapsed: getReadableTime(totalTime)
+    };
+      print(widget.gameMode);
+      final id = await DatabaseHelper.instance.insert(row);
+      print('Saved row: $id');
+      dataSaved = 1;
+    } else {
+      print(widget.gameMode.toString());
+      print('Data not saved.');
+    }
+  }
+
   _loadPlayerName() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? playerName = prefs.getString('playerName');
@@ -554,6 +575,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                         SizedBox(height: 30),
                         ElevatedButton(
                           onPressed: () {
+                            _saveGameData();
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
@@ -573,6 +595,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                         SizedBox(height: 20),
                         ElevatedButton(
                           onPressed: () {
+                            _saveGameData();
                             Navigator.of(context).push(MaterialPageRoute(builder: (context) => WallOfFameScreen()));
                           },  // Add functionality to go to Wall of Fame
                           child: Text('Wall of Fame', style: GoogleFonts.fredoka(color: Colors.white)),

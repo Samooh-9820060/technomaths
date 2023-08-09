@@ -1,20 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:technomaths/enums/game_mode.dart';
 
+import '../database/database_helper.dart';
+
 class WallOfFameScreen extends StatefulWidget {
   @override
   _WallOfFameScreenState createState() => _WallOfFameScreenState();
 }
 
 class _WallOfFameScreenState extends State<WallOfFameScreen> {
-  List<Map<String, dynamic>> scores = [
-    {'name': 'John', 'score': 1500, 'gameMode': GameMode.Addition, 'timeElapsed': '1:10'},
 
-    // ... more scores
-  ];
-
+  List<Map<String, dynamic>> scores = [];
   int rowsPerPage = 10; // Number of rows to show per page
   GameMode selectedMode = GameMode.Addition;
+
+  // Load scores from the database upon initialization
+  @override
+  void initState() {
+    super.initState();
+    _loadScores();
+  }
+
+  Future<void> _loadScores() async {
+    List<Map<String, dynamic>> dbRows = await DatabaseHelper.instance.queryAllRows();
+    // Create a new list from the database result to avoid read-only issues
+    List<Map<String, dynamic>> rows = List.from(dbRows);
+
+    rows.sort((a, b) {
+      int compareScore = b['score'].compareTo(a['score']);
+
+      if (compareScore == 0) {
+        // Assuming 'timeElapsed' is in format 'mm:ss', you can compare as strings
+        // because '05:00' < '06:00' and '05:01' < '05:02'
+        return a['timeElapsed'].compareTo(b['timeElapsed']);
+      }
+
+      return compareScore;
+    });
+
+    setState(() {
+      scores = rows;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +91,7 @@ class _WallOfFameScreenState extends State<WallOfFameScreen> {
   }
 
   Widget _buildScoreList(List<Map<String, dynamic>> scores, GameMode mode) {
-    var filteredScores = scores.where((score) => score['gameMode'] == mode).toList();
+    var filteredScores = scores.where((score) => score['gameMode'] == mode.toString()).toList();
 
     return SingleChildScrollView(
       child: PaginatedDataTable(
