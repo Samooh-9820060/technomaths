@@ -32,7 +32,9 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   int remainingTime = 0;
   Timer? timer;
   int maxNumber = 9;
-  int timeRemaining = 15;
+  Duration totalTime = Duration(seconds: 0);
+  Timer? totalGameTimer;
+
 
   Key key = UniqueKey();
   // Check if the device can vibrate
@@ -48,6 +50,14 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     _scoreController = AnimationController(
         duration: Duration(milliseconds: 1000), vsync: this);
     _scoreAnimation = Tween<double>(begin: 0, end: 1).animate(_scoreController);
+    startTotalGameTimer();
+  }
+
+  String getReadableTime(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
+    String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
+    return "${twoDigitMinutes}:${twoDigitSeconds}";
   }
 
   // Asynchronous method to check vibration support
@@ -66,6 +76,17 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     super.dispose();
   }
 
+  void startTotalGameTimer() {
+    totalGameTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+      setState(() {
+        totalTime = totalTime + Duration(seconds: 1);
+      });
+    });
+  }
+
+  void stopTotalGameTimer() {
+    totalGameTimer?.cancel();
+  }
 
 
   void increaseDifficulty() {
@@ -140,6 +161,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     timer?.cancel();
 
     if (lives <= 0) {
+      stopTotalGameTimer();
       return;
     }
 
@@ -355,6 +377,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       setState(() {
         lives = 0; // Ensure lives are set to 0
       });
+      stopTotalGameTimer();
       timer?.cancel();
     }
     else {
@@ -388,20 +411,23 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                         Column(
                           children: [
                             // Timer Text
-                            Text(
-                              '$remainingTime s',
-                              style: GoogleFonts.aBeeZee(
-                                color: Colors.purple[700],
-                                fontWeight: FontWeight.bold,
-                                fontSize: 20,
+                            // Total time elapsed display
+                            Center(
+                              child: Text(
+                                'Time: ${getReadableTime(totalTime)}',
+                                style: GoogleFonts.aBeeZee(
+                                  color: Colors.purple[700],
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 20,
+                                ),
                               ),
                             ),
                             // Spacer for a gap between text and progress bar
-                            SizedBox(height: 10),
+                            SizedBox(height: 30),
                             // Progress bar
                             Container(
-                              padding: EdgeInsets.symmetric(horizontal: 20), // Padding for wider bar
-                              height: 30, // Height for progress bar
+                              padding: EdgeInsets.symmetric(horizontal: 30), // Padding for wider bar
+                              height: 10, // Height for progress bar
                               child: TweenAnimationBuilder(
                                 key: key,
                                 tween: Tween(begin: 1.0, end: 0.0),
@@ -424,14 +450,14 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: List.generate(lives, (index) => Icon(Icons.favorite, color: Colors.purple, size: 40)).toList(),
                         ),
-                        SizedBox(height: 50),
+                        SizedBox(height: 30),
                         Center(
                           child: Text(
                             'Score: $score',
                             style: GoogleFonts.fredoka(color: Colors.purple, fontSize: 32),
                           ),
                         ),
-// Animated score pop-up
+                        // Animated score pop-up
                         FadeTransition(
                           opacity: _scoreAnimation,
                           child: Text(
@@ -440,7 +466,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                           ),
                         ),
 
-                        SizedBox(height: 50),
+                        SizedBox(height: 30),
                         Text(
                           question,
                           style: GoogleFonts.fredoka(fontSize: 50, color: Colors.purple),
