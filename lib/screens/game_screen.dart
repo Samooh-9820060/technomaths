@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:technomaths/widgets/animated_buttons.dart';
 import 'package:technomaths/enums/game_mode.dart';
@@ -35,11 +36,22 @@ class _GameScreenState extends State<GameScreen> {
   Timer? timer;
   int level = 1;
   Key key = UniqueKey();
+  // Check if the device can vibrate
+  bool _canVibrate = false;
 
   @override
   void initState() {
     super.initState();
     generateQuestion();
+    _checkVibrationSupport();
+  }
+
+  // Asynchronous method to check vibration support
+  Future<void> _checkVibrationSupport() async {
+    bool vibrationSupported = await Vibrate.canVibrate;
+    setState(() {
+      _canVibrate = vibrationSupported;
+    });
   }
 
   @override
@@ -224,6 +236,15 @@ class _GameScreenState extends State<GameScreen> {
   void checkAnswer(String selectedOption, int correctAnswer) {
     // Cancel the timer regardless of the correctness of the answer
     timer?.cancel();
+
+    if (_canVibrate) {
+      if (selectedOption == correctAnswer.toString()) {
+        Vibrate.feedback(FeedbackType.success);  // Vibrate on correct answer
+      } else {
+        Vibrate.feedback(FeedbackType.error);    // Vibrate on incorrect answer
+      }
+    }
+
 
     if (selectedOption == correctAnswer.toString()) {
       setState(() {
