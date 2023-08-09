@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:technomaths/screens/wall_of_fame.dart';
 import 'package:technomaths/widgets/animated_buttons.dart';
 import 'package:flutter/services.dart'; // Required for SystemNavigator
 import 'package:technomaths/screens/endless_mode_screen.dart'; // Add this import
@@ -36,6 +37,8 @@ class HomeScreen extends StatelessWidget {
                 // Code to go to the levels
               }),
               AnimatedButton('Wall of Fame', onPressed: () {
+                Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => WallOfFameScreen()));
                 // Code to go to the wall of fame
               }),
               AnimatedButton('Quit', onPressed: () {
