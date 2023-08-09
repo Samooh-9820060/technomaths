@@ -4,7 +4,6 @@ import 'package:technomaths/widgets/animated_buttons.dart';
 import 'package:technomaths/screens/game_screen.dart';
 import 'package:technomaths/enums/game_mode.dart';
 import 'package:technomaths/enums/game_speed.dart';
-import 'package:technomaths/enums/number_length.dart';
 
 
 class EndlessModeScreen extends StatelessWidget {
@@ -38,7 +37,6 @@ class EndlessModeScreen extends StatelessWidget {
                     builder: (context) => GameScreen(
                         gameMode: GameMode.Addition,
                         gameSpeed: GameSpeed.fifteen,
-                        numberLength: NumberLength.one
                     ),
                   ),
                 );
@@ -50,7 +48,6 @@ class EndlessModeScreen extends StatelessWidget {
                     builder: (context) => GameScreen(
                         gameMode: GameMode.Subtraction,
                         gameSpeed: GameSpeed.fifteen,
-                        numberLength: NumberLength.one
                     ),
                   ),
                 );
@@ -62,7 +59,6 @@ class EndlessModeScreen extends StatelessWidget {
                     builder: (context) => GameScreen(
                         gameMode: GameMode.Multiplication,
                         gameSpeed: GameSpeed.fifteen,
-                        numberLength: NumberLength.one
                     ),
                   ),
                 );
@@ -74,7 +70,6 @@ class EndlessModeScreen extends StatelessWidget {
                     builder: (context) => GameScreen(
                         gameMode: GameMode.Division,
                         gameSpeed: GameSpeed.fifteen,
-                        numberLength: NumberLength.one
                     ),
                   ),
                 );
@@ -86,7 +81,6 @@ class EndlessModeScreen extends StatelessWidget {
                     builder: (context) => GameScreen(
                         gameMode: GameMode.All,
                         gameSpeed: GameSpeed.fifteen,
-                        numberLength: NumberLength.one
                     ),
                   ),
                 );

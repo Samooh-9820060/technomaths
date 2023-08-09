@@ -7,19 +7,16 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:technomaths/widgets/animated_buttons.dart';
 import 'package:technomaths/enums/game_mode.dart';
 import 'package:technomaths/enums/game_speed.dart';
-import 'package:technomaths/enums/number_length.dart';
 
 
 class GameScreen extends StatefulWidget {
   GameMode gameMode;
   GameSpeed gameSpeed;
-  NumberLength numberLength;
 
   GameScreen({
     Key? key,
     required this.gameMode,
     required this.gameSpeed,
-    required this.numberLength
   }) : super(key: key);
 
   @override
@@ -34,7 +31,9 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   int lives = 3;
   int remainingTime = 0;
   Timer? timer;
-  int level = 1;
+  int maxNumber = 9;
+  int timeRemaining = 15;
+
   Key key = UniqueKey();
   // Check if the device can vibrate
   bool _canVibrate = false;
@@ -70,68 +69,69 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
 
 
   void increaseDifficulty() {
-    switch (level) {
-      case 1:
-        widget.numberLength = NumberLength.one;
-        widget.gameSpeed = GameSpeed.fifteen;
-        break;
-      case 2:
-        widget.numberLength = NumberLength.two;
-        break;
-      case 3:
-        widget.gameSpeed = GameSpeed.fourteen;
-        break;
-      case 4:
-        widget.gameSpeed = GameSpeed.thirteen;
-        break;
-      case 5:
-        widget.gameSpeed = GameSpeed.twelve;
-        break;
-      case 6:
-        widget.numberLength = NumberLength.three;
-        break;
-      case 7:
-        widget.gameSpeed = GameSpeed.eleven;
-        break;
-      case 8:
-        widget.gameSpeed = GameSpeed.ten;
-        break;
-      case 9:
-        widget.gameSpeed = GameSpeed.nine;
-        break;
-      case 10:
-        widget.gameSpeed = GameSpeed.eight;
-        break;
-      case 11:
-        widget.numberLength = NumberLength.four;
-        break;
-      case 12:
-        widget.gameSpeed = GameSpeed.seven;
-        break;
-      case 13:
-        widget.gameSpeed = GameSpeed.six;
-        break;
-      case 14:
-        widget.numberLength = NumberLength.five;
-        break;
-      case 15:
-        widget.gameSpeed = GameSpeed.five;
-        break;
-      case 16:
-        widget.gameSpeed = GameSpeed.four;
-        break;
-      case 16:
-        widget.gameSpeed = GameSpeed.three;
-        break;
-      case 16:
-        widget.gameSpeed = GameSpeed.two;
-        break;
-      case 16:
-        widget.gameSpeed = GameSpeed.one;
-        break;
-      default:
-      // Handle cases beyond this, if necessary
-        break;
+    // Increase maxNumber every 5 levels
+    if (score <= 10) {
+      maxNumber = 4 + score;
+    } else if (score <= 30) {
+      maxNumber = 25 + score;
+    } else if (score <= 50) {
+      maxNumber = 80 + score;  // For initial scores, increase by 1 unit.
+    } else if (score <= 100) {
+      maxNumber = 400 + 2 * (score - 50);  // Increase by 2 units for scores between 50 and 100.
+    } else if (score <= 150) {
+      maxNumber = 3000 + 5 * (score - 100);  // Increase by 5 units beyond 100.
+    } else {
+      maxNumber = 10000 + 10 * (score - 150);  // Further increase for high scores.
+    }
+
+    // Increase gameSpeed every 2 levels
+    if (score  % 10 == 0) {
+      switch (widget.gameSpeed) {
+        case GameSpeed.fifteen:
+          widget.gameSpeed = GameSpeed.fourteen;
+          break;
+        case GameSpeed.fourteen:
+          widget.gameSpeed = GameSpeed.thirteen;
+          break;
+        case GameSpeed.thirteen:
+          widget.gameSpeed = GameSpeed.twelve;
+          break;
+        case GameSpeed.twelve:
+          widget.gameSpeed = GameSpeed.eleven;
+          break;
+        case GameSpeed.eleven:
+          widget.gameSpeed = GameSpeed.ten;
+          break;
+        case GameSpeed.ten:
+          widget.gameSpeed = GameSpeed.nine;
+          break;
+        case GameSpeed.nine:
+          widget.gameSpeed = GameSpeed.eight;
+          break;
+        case GameSpeed.eight:
+          widget.gameSpeed = GameSpeed.seven;
+          break;
+        case GameSpeed.seven:
+          widget.gameSpeed = GameSpeed.six;
+          break;
+        case GameSpeed.six:
+          widget.gameSpeed = GameSpeed.five;
+          break;
+        case GameSpeed.five:
+          widget.gameSpeed = GameSpeed.four;
+          break;
+        case GameSpeed.four:
+          widget.gameSpeed = GameSpeed.three;
+          break;
+        case GameSpeed.three:
+          widget.gameSpeed = GameSpeed.two;
+          break;
+        case GameSpeed.two:
+          widget.gameSpeed = GameSpeed.one;
+          break;
+        default:
+          break;
+      }
     }
   }
 
@@ -147,28 +147,8 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     int number1, number2;
     String operator;
 
-    switch(widget.numberLength) {
-      case NumberLength.one:
-        number1 = rng.nextInt(9) + 1;
-        number2 = rng.nextInt(9) + 1;
-        break;
-      case NumberLength.two:
-        number1 = rng.nextInt(99) + 1;
-        number2 = rng.nextInt(99) + 1;
-        break;
-      case NumberLength.three:
-        number1 = rng.nextInt(999) + 1;
-        number2 = rng.nextInt(999) + 1;
-        break;
-      case NumberLength.four:
-        number1 = rng.nextInt(9999) + 1;
-        number2 = rng.nextInt(9999) + 1;
-        break;
-      case NumberLength.five:
-        number1 = rng.nextInt(99999) + 1;
-        number2 = rng.nextInt(99999) + 1;
-        break;
-    }
+    number1 = rng.nextInt(maxNumber) + 1;
+    number2 = rng.nextInt(maxNumber) + 1;
 
     List<String> operators = ['+', '-', '×', '÷'];
 
@@ -227,9 +207,23 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     Set<String> optionsSet = {};
     optionsSet.add(correctAnswer.toString());  // Add correct answer to options
 
+    // Capture the least significant digit of the correct answer
+    int lastDigitOfCorrectAnswer = correctAnswer % 10;
+
     while (optionsSet.length < 4) {
-      // Generate a number in the range (correctAnswer - 10, correctAnswer + 10)
-      int option = correctAnswer + rng.nextInt(21) - 10;
+      int option;
+
+      // Generate a number that ends with the same last digit about 50% of the time
+      if (rng.nextBool()) {
+        option = correctAnswer + rng.nextInt(21) - 10;
+
+        // Ensure that it has the same last digit as the correct answer
+        option -= option % 10;
+        option += lastDigitOfCorrectAnswer;
+      } else {
+        option = correctAnswer + rng.nextInt(21) - 10;
+      }
+
       optionsSet.add(option.toString());
     }
 
@@ -261,11 +255,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
         score++;
       });
 
-      if (score % 10 == 0) { // Every 10th score, level up
-        level++;
-        increaseDifficulty();
-      }
-
+      increaseDifficulty();
       generateQuestion();
     } else {
       setState(() {
@@ -355,6 +345,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   }
 
   void endOfTimer() {
+    Vibrate.feedback(FeedbackType.error);
     if(lives > 1) {
       setState(() {
         lives--;
@@ -515,7 +506,6 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                                 builder: (context) => GameScreen(
                                   gameMode: widget.gameMode,
                                   gameSpeed: GameSpeed.fifteen,
-                                  numberLength: NumberLength.one,
                                 ),
                               ),
                             );
