@@ -4,6 +4,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:technomaths/screens/wall_of_fame.dart';
 import 'package:technomaths/widgets/animated_buttons.dart';
 import 'package:technomaths/enums/game_mode.dart';
 import 'package:technomaths/enums/game_speed.dart';
@@ -41,10 +43,13 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   bool _canVibrate = false;
   late AnimationController _scoreController;
   late Animation<double> _scoreAnimation;
+  TextEditingController _nameController = TextEditingController();
+
 
   @override
   void initState() {
     super.initState();
+    _loadPlayerName();
     generateQuestion();
     _checkVibrationSupport();
     _scoreController = AnimationController(
@@ -287,7 +292,11 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       // If game isn't over, generate a new question
       if (lives > 0){
         generateQuestion();
+      } else {
+        stopTotalGameTimer();
       }
+
+
     }
   }
 
@@ -383,6 +392,21 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     else {
       timer?.cancel();
     }
+  }
+
+  _loadPlayerName() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? playerName = prefs.getString('playerName');
+    print("Loaded Name: $playerName");  // Debug print statement
+    setState(() {
+      _nameController.text = playerName ?? '';
+    });
+  }
+
+  _savePlayerName(String name) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString('playerName', name);
+    print("Saved Name: $name");  // Debug print statement
   }
 
   @override
@@ -517,7 +541,11 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                       children: <Widget>[
                         Text('Your Name', textAlign: TextAlign.center,),
                         TextField(
+                          controller: _nameController,
                           textAlign: TextAlign.center,
+                          onChanged: (value) {
+                            _savePlayerName(value);
+                          },
                         ),  // User can enter their name here
                         SizedBox(height: 20),
                         Text('Your Score: $score', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: Colors.purple, fontSize: 24)),
@@ -544,7 +572,9 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                         ),
                         SizedBox(height: 20),
                         ElevatedButton(
-                          onPressed: () {},  // Add functionality to go to Wall of Fame
+                          onPressed: () {
+                            Navigator.of(context).push(MaterialPageRoute(builder: (context) => WallOfFameScreen()));
+                          },  // Add functionality to go to Wall of Fame
                           child: Text('Wall of Fame', style: GoogleFonts.fredoka(color: Colors.white)),
                           style: ElevatedButton.styleFrom(
                             primary: Colors.purple, // This replaces the 'color' property
