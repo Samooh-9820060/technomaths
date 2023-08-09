@@ -26,7 +26,7 @@ class GameScreen extends StatefulWidget {
   _GameScreenState createState() => _GameScreenState();
 }
 
-class _GameScreenState extends State<GameScreen> {
+class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateMixin {
   String question = '';
   List<String> options = [];
   int score = 0;
@@ -38,12 +38,17 @@ class _GameScreenState extends State<GameScreen> {
   Key key = UniqueKey();
   // Check if the device can vibrate
   bool _canVibrate = false;
+  late AnimationController _scoreController;
+  late Animation<double> _scoreAnimation;
 
   @override
   void initState() {
     super.initState();
     generateQuestion();
     _checkVibrationSupport();
+    _scoreController = AnimationController(
+        duration: Duration(milliseconds: 1000), vsync: this);
+    _scoreAnimation = Tween<double>(begin: 0, end: 1).animate(_scoreController);
   }
 
   // Asynchronous method to check vibration support
@@ -57,6 +62,8 @@ class _GameScreenState extends State<GameScreen> {
   @override
   void dispose() {
     timer?.cancel();
+    super.dispose();
+    _scoreController.dispose();
     super.dispose();
   }
 
@@ -247,6 +254,9 @@ class _GameScreenState extends State<GameScreen> {
 
 
     if (selectedOption == correctAnswer.toString()) {
+      _scoreController.forward().then((_) {
+        _scoreController.reverse();
+      });
       setState(() {
         score++;
       });
@@ -425,11 +435,25 @@ class _GameScreenState extends State<GameScreen> {
                         ),
                         SizedBox(height: 50),
                         Center(
-                          child: Text(
-                            'Score: $score',
-                            style: GoogleFonts.fredoka(color: Colors.purple, fontSize: 32),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min, // To minimize the width of the row
+                            children: [
+                              Text(
+                                'Score: $score',
+                                style: GoogleFonts.fredoka(color: Colors.purple, fontSize: 32),
+                              ),
+                              SizedBox(width: 10), // A small space between the score and the '+1'
+                              FadeTransition(
+                                opacity: _scoreAnimation,
+                                child: Text(
+                                  '+1',
+                                  style: GoogleFonts.fredoka(color: Colors.green, fontSize: 32), // Made it a bit smaller
+                                ),
+                              ),
+                            ],
                           ),
                         ),
+
                         SizedBox(height: 50),
                         Text(
                           question,
