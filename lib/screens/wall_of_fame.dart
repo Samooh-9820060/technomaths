@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:technomaths/enums/game_mode.dart';
 
 import '../database/database_helper.dart';
@@ -49,21 +50,42 @@ class _WallOfFameScreenState extends State<WallOfFameScreen> {
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('Wall of Fame'),
+          title: Text('Wall of Fame', style: GoogleFonts.fredoka(fontSize: 22)), // Use a different font
+          backgroundColor: Colors.deepPurple, // Gradient start color
+          flexibleSpace: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Colors.deepPurple, Colors.blueAccent],
+              ),
+            ),
+          ),
           bottom: TabBar(
+            indicatorColor: Colors.yellowAccent,
+            indicatorSize: TabBarIndicatorSize.label,
             tabs: [
-              Tab(text: 'Local'),
-              Tab(text: '24h'),
-              Tab(text: 'All Time'),
+              Tab(icon: Icon(Icons.local_play), text: 'Local'),
+              Tab(icon: Icon(Icons.access_time), text: '24h'),
+              Tab(icon: Icon(Icons.stars), text: 'All Time'),
             ],
           ),
         ),
-        body: TabBarView(
-          children: [
-            _buildScoreList(scores, selectedMode),
-            _buildScoreList(scores, selectedMode),
-            _buildScoreList(scores, selectedMode),
-          ],
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topRight,
+              end: Alignment.bottomLeft,
+              colors: [Colors.blueAccent.withOpacity(0.2), Colors.deepPurple.withOpacity(0.2)],
+            ),
+          ),
+          child: TabBarView(
+            children: [
+              _buildScoreList(scores, selectedMode),
+              _buildScoreList(scores, selectedMode),
+              _buildScoreList(scores, selectedMode),
+            ],
+          ),
         ),
       ),
     );
@@ -73,58 +95,114 @@ class _WallOfFameScreenState extends State<WallOfFameScreen> {
     var filteredScores = scores.where((score) => score['gameMode'] == mode.toString()).toList();
 
     return SingleChildScrollView(
-      child: PaginatedDataTable(
-        header: Row(
-          children: [
-            Expanded(
-              child: Text('Scores'),
-            ),
-            DropdownButton<GameMode>(
-              value: selectedMode,
-              onChanged: (GameMode? newValue) {
-                if (newValue != null) {
-                  setState(() {
-                    selectedMode = newValue;
-                  });
-                }
-              },
-              underline: Container(),  // This will hide the underline
-              items: GameMode.values.map((GameMode mode) {
-                return DropdownMenuItem<GameMode>(
-                  value: mode,
-                  child: Text(
-                    mode.toString().split('.').last,
-                    style: TextStyle(color: Colors.black),
-                  ),
-                );
-              }).toList(),
+      child: Container(
+        margin: EdgeInsets.all(10.0),
+        padding: EdgeInsets.symmetric(vertical: 20.0, horizontal: 15.0), // Slightly increased padding
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.9),
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 10,
+              offset: Offset(0, 5),
             ),
           ],
         ),
-        rowsPerPage: rowsPerPage,
-        availableRowsPerPage: [10, 20, 30, 50],
-        onRowsPerPageChanged: (value) {
-          setState(() {
-            rowsPerPage = value!;
-          });
-        },
-        columns: [
-          DataColumn(
-              label: Center(child: Text('#', style: TextStyle(fontWeight: FontWeight.bold)))
+        child: PaginatedDataTable(
+          header: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Scores',
+                  style: GoogleFonts.fredoka(fontWeight: FontWeight.bold, fontSize: 24),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              SizedBox(width: 8),
+              Container(
+                padding: EdgeInsets.symmetric(vertical: 5.0, horizontal: 10.0),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.deepPurple, Colors.blueAccent],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(12.0),
+                ),
+                child: PopupMenuButton<GameMode>(
+                  onSelected: (GameMode mode) {
+                    setState(() {
+                      selectedMode = mode;
+                    });
+                  },
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        selectedMode.toString().split('.').last,
+                        style: GoogleFonts.fredoka(fontWeight: FontWeight.normal, fontSize: 18, color: Colors.white),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      SizedBox(width: 8),
+                      Icon(Icons.arrow_drop_down, color: Colors.white),
+                    ],
+                  ),
+                  itemBuilder: (BuildContext context) => GameMode.values.map((GameMode mode) {
+                    return PopupMenuItem<GameMode>(
+                      value: mode,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            mode.toString().split('.').last,
+                            style: GoogleFonts.fredoka(fontWeight: FontWeight.normal, fontSize: 16),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Icon(_getIconForMode(mode), color: Colors.deepPurple),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
           ),
-          DataColumn(
-              label: Center(child: Text('Name', style: TextStyle(fontWeight: FontWeight.bold)))
-          ),
-          DataColumn(
-              label: Center(child: Text('Score', style: TextStyle(fontWeight: FontWeight.bold)))
-          ),
-          DataColumn(
-              label: Center(child: Text('Time', style: TextStyle(fontWeight: FontWeight.bold)))
-          ),
-        ],
-        source: _DataTableSource(filteredScores),
+          columns: [
+            DataColumn(
+              label: Center(child: Text('#', style: GoogleFonts.fredoka(fontWeight: FontWeight.bold, fontSize: 18))),
+            ),
+            DataColumn(
+              label: Center(child: Text('Name', style: GoogleFonts.fredoka(fontWeight: FontWeight.bold, fontSize: 18))),
+            ),
+            DataColumn(
+              label: Center(child: Text('Score', style: GoogleFonts.fredoka(fontWeight: FontWeight.bold, fontSize: 18))),
+            ),
+            DataColumn(
+              label: Center(child: Text('Time', style: GoogleFonts.fredoka(fontWeight: FontWeight.bold, fontSize: 18))),
+            ),
+          ],
+          source: _DataTableSource(filteredScores),
+        ),
       ),
     );
+  }
+}
+
+IconData _getIconForMode(GameMode mode) {
+  switch (mode) {
+    case GameMode.Addition:
+      return Icons.add_circle_outline;
+    case GameMode.Subtraction:
+      return Icons.remove_circle_outline;
+    case GameMode.Multiplication:
+      return Icons.close;  // using the 'close' icon which looks like a multiplication sign (x)
+    case GameMode.Division:
+      return Icons.horizontal_split;  // using the 'horizontal_split' which can represent division
+    case GameMode.All:
+      return Icons.all_inclusive;  // a general icon to represent 'all'
+    default:
+      return Icons.help_outline;
   }
 }
 
