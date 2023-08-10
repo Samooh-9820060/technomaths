@@ -50,27 +50,6 @@ class _WallOfFameScreenState extends State<WallOfFameScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: Text('Wall of Fame'),
-          actions: [
-            DropdownButtonHideUnderline(
-              child: DropdownButton<GameMode>(
-                value: selectedMode,
-                dropdownColor: Colors.grey,
-                onChanged: (GameMode? newValue) {
-                  if (newValue != null) {
-                    setState(() {
-                      selectedMode = newValue;
-                    });
-                  }
-                },
-                items: GameMode.values.map((GameMode mode) {
-                  return DropdownMenuItem<GameMode>(
-                    value: mode,
-                    child: Text(mode.toString().split('.').last, style: TextStyle(color: Colors.white)),
-                  );
-                }).toList(),
-              ),
-            )
-          ],
           bottom: TabBar(
             tabs: [
               Tab(text: 'Local'),
@@ -95,7 +74,33 @@ class _WallOfFameScreenState extends State<WallOfFameScreen> {
 
     return SingleChildScrollView(
       child: PaginatedDataTable(
-        header: Text('Scores'),
+        header: Row(
+          children: [
+            Expanded(
+              child: Text('Scores'),
+            ),
+            DropdownButton<GameMode>(
+              value: selectedMode,
+              onChanged: (GameMode? newValue) {
+                if (newValue != null) {
+                  setState(() {
+                    selectedMode = newValue;
+                  });
+                }
+              },
+              underline: Container(),  // This will hide the underline
+              items: GameMode.values.map((GameMode mode) {
+                return DropdownMenuItem<GameMode>(
+                  value: mode,
+                  child: Text(
+                    mode.toString().split('.').last,
+                    style: TextStyle(color: Colors.black),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        ),
         rowsPerPage: rowsPerPage,
         availableRowsPerPage: [10, 20, 30, 50],
         onRowsPerPageChanged: (value) {
