@@ -58,5 +58,20 @@ class DatabaseHelper {
     return await db.query(table);
   }
 
-//... (You can add other CRUD methods like update and delete as needed)
+  Future<int?> queryHighestScore(String gameMode) async {
+    Database db = await instance.database;
+
+    final result = await db.query(
+      table,
+      columns: ['MAX($columnScore) as highest_score'],
+      where: '$columnGameMode = ?',
+      whereArgs: [gameMode],
+    );
+
+    if (result.isNotEmpty) {
+      return result.first['highest_score'] as int?;
+    }
+    return null;
+  }
+
 }
