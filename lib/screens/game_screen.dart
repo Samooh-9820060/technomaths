@@ -39,6 +39,8 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   Duration totalTime = Duration(seconds: 0);
   Timer? totalGameTimer;
   int dataSaved = 0;
+  int? highestScore;
+
 
   Key key = UniqueKey();
   // Check if the device can vibrate
@@ -52,6 +54,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   void initState() {
     super.initState();
     _loadPlayerName();
+    _loadHighestScore();
     generateQuestion();
     _checkVibrationSupport();
     _scoreController = AnimationController(
@@ -59,6 +62,13 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     _scoreAnimation = Tween<double>(begin: 0, end: 1).animate(_scoreController);
     startTotalGameTimer();
     dataSaved = 0;
+  }
+
+  Future<void> _loadHighestScore() async {
+    final score = await DatabaseHelper.instance.queryHighestScore(widget.gameMode.toString());
+    setState(() {
+      highestScore = score;
+    });
   }
 
   String getReadableTime(Duration duration) {
@@ -571,7 +581,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                         SizedBox(height: 20),
                         Text('Your Score: $score', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: Colors.purple, fontSize: 24)),
                         SizedBox(height: 20),
-                        Text('Best Score: $score', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: Colors.purple, fontSize: 24)),  // Keeping current score as best score for now
+                        Text('Best Score: $highestScore', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: Colors.purple, fontSize: 24)),
                         SizedBox(height: 30),
                         ElevatedButton(
                           onPressed: () {
