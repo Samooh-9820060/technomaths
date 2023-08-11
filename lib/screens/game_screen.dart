@@ -42,6 +42,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   Timer? totalGameTimer;
   int dataSaved = 0;
   int? highestScore;
+  bool canRevive = true;
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
 
@@ -66,6 +67,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     _scoreAnimation = Tween<double>(begin: 0, end: 1).animate(_scoreController);
     startTotalGameTimer();
     dataSaved = 0;
+    canRevive = true;
   }
 
 
@@ -479,6 +481,8 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     } else {
       print('Data not saved.');
     }
+
+    canRevive = false;
   }
 
   _loadPlayerName() async {
@@ -648,6 +652,31 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                         SizedBox(height: 20),
                         Text('Best Score: $highestScore', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: Colors.purple, fontSize: 24)),
                         SizedBox(height: 30),
+                        if (canRevive) ...[
+                          ElevatedButton(
+                            onPressed: () {
+                              // Logic to show the ad and then grant extra life
+                            },
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.play_arrow, color: Colors.white),  // Representing a video play button
+                                SizedBox(width: 10),
+                                Text('Revive with Ad', style: GoogleFonts.fredoka(color: Colors.white, fontSize: 18)),
+                              ],
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              primary: Colors.green[500],
+                              onPrimary: Colors.white,
+                              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                              minimumSize: Size(MediaQuery.of(context).size.width * 0.7, 50),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 20),
+                        ],
                         ElevatedButton(
                           onPressed: () {
                             _saveGameDataLocal();
