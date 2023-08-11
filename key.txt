@@ -1,0 +1,2 @@
+keyAlias 'my-key-alias'
+storeFile file('D:\\Projects\\technomaths\\my-release-key.jks')
