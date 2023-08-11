@@ -7,6 +7,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../database/database_helper.dart';
 
 class WallOfFameScreen extends StatefulWidget {
+  GameMode gameMode;
+
+  WallOfFameScreen({
+    Key? key,
+    required this.gameMode,
+  }) : super(key: key);
+
   @override
   _WallOfFameScreenState createState() => _WallOfFameScreenState();
 }
@@ -24,6 +31,7 @@ class _WallOfFameScreenState extends State<WallOfFameScreen> {
   @override
   void initState() {
     super.initState();
+    selectedMode = widget.gameMode;
     _loadScores();  // for local scores
     _load24hScores().then((fetchedScores) {
       setState(() {
