@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -6,6 +7,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:technomaths/screens/wall_of_fame.dart';
 import 'package:technomaths/widgets/animated_buttons.dart';
@@ -43,6 +45,16 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   int dataSaved = 0;
   int? highestScore;
   bool canRevive = true;
+  RewardedAd? _rewardedAd;
+  int _numRewardedLoadAttempts = 0;
+  static const int maxFailedLoadAttempts = 3;
+
+
+  static final AdRequest request = AdRequest(
+    keywords: <String>['foo', 'bar'],
+    contentUrl: 'http://foo.com/bar.html',
+    nonPersonalizedAds: true,
+  );
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
 
@@ -55,11 +67,13 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   TextEditingController _nameController = TextEditingController();
 
 
+
   @override
   void initState() {
     super.initState();
     _loadPlayerName();
     _loadHighestScore();
+    _createRewardedAd();
     generateQuestion();
     _checkVibrationSupport();
     _scoreController = AnimationController(
@@ -68,6 +82,58 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     startTotalGameTimer();
     dataSaved = 0;
     canRevive = true;
+  }
+
+  void _createRewardedAd() {
+    RewardedAd.load(
+        adUnitId: Platform.isAndroid
+            ? 'ca-app-pub-6109906096472807/2881924681'
+            : 'ca-app-pub-6109906096472807/2881924681',
+        request: request,
+        rewardedAdLoadCallback: RewardedAdLoadCallback(
+          onAdLoaded: (RewardedAd ad) {
+            _rewardedAd = ad;
+            _numRewardedLoadAttempts = 0;
+          },
+          onAdFailedToLoad: (LoadAdError error) {
+            _rewardedAd = null;
+            _numRewardedLoadAttempts += 1;
+            if (_numRewardedLoadAttempts < maxFailedLoadAttempts) {
+              _createRewardedAd();
+            }
+          },
+        ));
+  }
+
+  void _showRewardedAd() {
+    if (_rewardedAd == null) {
+      return;
+    }
+    _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+      onAdShowedFullScreenContent: (RewardedAd ad) =>
+          print('ad onAdShowedFullScreenContent.'),
+      onAdDismissedFullScreenContent: (RewardedAd ad) {
+        ad.dispose();
+        _createRewardedAd();
+      },
+      onAdFailedToShowFullScreenContent: (RewardedAd ad, AdError error) {
+        ad.dispose();
+        _createRewardedAd();
+      },
+    );
+
+    _rewardedAd!.setImmersiveMode(true);
+    _rewardedAd!.show(
+        onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
+
+          //ad viewed
+          setState(() {
+            lives += 1;   // Award an extra life
+            canRevive = false;  // Ensure the user can't revive again until they lose again
+            startTimer(); // restart the timer or continue from where it was paused
+          });
+        });
+    _rewardedAd = null;
   }
 
 
@@ -478,8 +544,6 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       }
 
       dataSaved = 1;
-    } else {
-      print('Data not saved.');
     }
 
     canRevive = false;
@@ -488,7 +552,6 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   _loadPlayerName() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? playerName = prefs.getString('playerName');
-    print("Loaded Name: $playerName");  // Debug print statement
     setState(() {
       _nameController.text = playerName ?? '';
     });
@@ -497,7 +560,6 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   _savePlayerName(String name) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setString('playerName', name);
-    print("Saved Name: $name");  // Debug print statement
   }
 
   String formatDecimal(String value) {
@@ -652,17 +714,17 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                         SizedBox(height: 20),
                         Text('Best Score: $highestScore', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: Colors.purple, fontSize: 24)),
                         SizedBox(height: 30),
-                        if (canRevive) ...[
+                        if (canRevive && _rewardedAd != null) ...[
                           ElevatedButton(
                             onPressed: () {
-                              // Logic to show the ad and then grant extra life
+                              _showRewardedAd();
                             },
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(Icons.play_arrow, color: Colors.white),  // Representing a video play button
                                 SizedBox(width: 10),
-                                Text('Revive with Ad', style: GoogleFonts.fredoka(color: Colors.white, fontSize: 18)),
+                                Text('Revive', style: GoogleFonts.fredoka(color: Colors.white, fontSize: 18)),
                               ],
                             ),
                             style: ElevatedButton.styleFrom(

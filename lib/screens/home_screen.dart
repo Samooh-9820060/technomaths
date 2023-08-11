@@ -22,15 +22,15 @@ class HomeScreen extends StatelessWidget {
                 style: GoogleFonts.fredoka(fontSize: 40, color: Colors.purple),
               ),
               SizedBox(height: 50), // Add this for extra space
-              AnimatedButton('Start Endless', onPressed: () {
+              AnimatedButton('Endless Mode', onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => EndlessModeScreen()),
                 );
               }),
-              AnimatedButton('Levels', onPressed: () {
+              //AnimatedButton('Levels', onPressed: () {
                 // Code to go to the levels
-              }),
+              //}),
               AnimatedButton('Wall of Fame', onPressed: () {
                 Navigator.of(context).push(MaterialPageRoute(
                     builder: (context) => WallOfFameScreen(
