@@ -65,7 +65,7 @@ class _WallOfFameScreenState extends State<WallOfFameScreen> {
             indicatorColor: Colors.yellowAccent,
             indicatorSize: TabBarIndicatorSize.label,
             tabs: [
-              Tab(icon: Icon(Icons.local_play), text: 'Local'),
+              Tab(icon: Icon(Icons.home), text: 'Local'),
               Tab(icon: Icon(Icons.access_time), text: '24h'),
               Tab(icon: Icon(Icons.stars), text: 'All Time'),
             ],
