@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:technomaths/enums/game_mode.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 
 import '../database/database_helper.dart';
 
@@ -12,6 +14,9 @@ class WallOfFameScreen extends StatefulWidget {
 class _WallOfFameScreenState extends State<WallOfFameScreen> {
 
   List<Map<String, dynamic>> scores = [];
+  List<Map<String, dynamic>> scores24h = [];
+  List<Map<String, dynamic>> allTimeScores = [];
+
   int rowsPerPage = 10; // Number of rows to show per page
   GameMode selectedMode = GameMode.Addition;
 
@@ -19,7 +24,63 @@ class _WallOfFameScreenState extends State<WallOfFameScreen> {
   @override
   void initState() {
     super.initState();
-    _loadScores();
+    _loadScores();  // for local scores
+    _load24hScores().then((fetchedScores) {
+      setState(() {
+        scores24h = fetchedScores;
+      });
+    });
+    _loadAllTimeScores().then((fetchedScores) {
+      setState(() {
+        allTimeScores = fetchedScores;
+      });
+    });
+  }
+
+
+  Future<List<Map<String, dynamic>>> _load24hScores() async {
+    final endTime = DateTime.now().add(Duration(minutes: 1));
+    final startTime = endTime.subtract(Duration(hours: 24));
+
+    QuerySnapshot snapshot = await FirebaseFirestore.instance
+        .collection('endlessModeGameData')
+        .where('datetime', isGreaterThan: startTime.toIso8601String())
+        .where('datetime', isLessThan: endTime.toIso8601String())
+        .get();
+
+    List<Map<String, dynamic>> fetchedScores = snapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
+
+    fetchedScores.sort((a, b) {
+      int compareScore = b['score'].compareTo(a['score']);
+
+      if (compareScore == 0) {
+        return a['timeElapsed'].compareTo(b['timeElapsed']);
+      }
+
+      return compareScore;
+    });
+
+    return fetchedScores;
+  }
+
+  Future<List<Map<String, dynamic>>> _loadAllTimeScores() async {
+    QuerySnapshot snapshot = await FirebaseFirestore.instance
+        .collection('endlessModeGameData')
+        .get();
+
+    List<Map<String, dynamic>> fetchedScores = snapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
+
+    fetchedScores.sort((a, b) {
+      int compareScore = b['score'].compareTo(a['score']);
+
+      if (compareScore == 0) {
+        return a['timeElapsed'].compareTo(b['timeElapsed']);
+      }
+
+      return compareScore;
+    });
+
+    return fetchedScores;
   }
 
   Future<void> _loadScores() async {
@@ -82,8 +143,8 @@ class _WallOfFameScreenState extends State<WallOfFameScreen> {
           child: TabBarView(
             children: [
               _buildScoreList(scores, selectedMode),
-              _buildScoreList(scores, selectedMode),
-              _buildScoreList(scores, selectedMode),
+              _buildScoreList(scores24h, selectedMode),
+              _buildScoreList(allTimeScores, selectedMode),
             ],
           ),
         ),
