@@ -635,7 +635,9 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                         ElevatedButton(
                           onPressed: () {
                             _saveGameDataLocal();
-                            Navigator.of(context).push(MaterialPageRoute(builder: (context) => WallOfFameScreen()));
+                            Navigator.of(context).push(MaterialPageRoute(builder: (context) => WallOfFameScreen(
+                              gameMode: widget.gameMode,
+                            )));
                           },  // Add functionality to go to Wall of Fame
                           child: Text('Wall of Fame', style: GoogleFonts.fredoka(color: Colors.white)),
                           style: ElevatedButton.styleFrom(
