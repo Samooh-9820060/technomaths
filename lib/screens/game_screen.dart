@@ -438,11 +438,11 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
         CollectionReference games = FirebaseFirestore.instance.collection('endlessModeGameData');
 
         Map<String, dynamic> firebaseRow = {
-          'columnDatetime': DateTime.now().toIso8601String(),  // Save the current date and time as a string in ISO format
-          'columnName': _nameController.text,
-          'columnScore': score,
-          'columnGameMode': widget.gameMode.toString(),
-          'columnTimeElapsed': getReadableTime(totalTime),
+          'datetime': DateTime.now().toIso8601String(),  // Save the current date and time as a string in ISO format
+          'name': _nameController.text,
+          'score': score,
+          'gameMode': widget.gameMode.toString(),
+          'timeElapsed': getReadableTime(totalTime),
         };
 
         await games.add(firebaseRow);
