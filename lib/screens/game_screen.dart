@@ -33,7 +33,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   String question = '';
   List<String> options = [];
   int score = 0;
-  int correctAnswer = 0;
+  dynamic correctAnswer = 0;
   int lives = 3;
   int remainingTime = 0;
   Timer? timer;
@@ -212,7 +212,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
         break;
       case GameMode.Division:
         operator = '÷';
-        correctAnswer = (number1 / number2).floor();  // If it's division, take the floor (integer part) of the division
+        correctAnswer = (number1 / number2);  // If it's division, take the floor (integer part) of the division
         break;
       case GameMode.All: // In case of 'All', pick a random operator
         operator = operators[rng.nextInt(operators.length)];
@@ -231,7 +231,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   }
 
   // A function to calculate the correct answer
-  int calculateAnswer(String operator, int number1, int number2) {
+  dynamic calculateAnswer(String operator, int number1, int number2) {
     switch(operator) {
       case '+':
         return number1 + number2;
@@ -240,33 +240,60 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       case '×':
         return number1 * number2;
       case '÷':
-        return (number1 / number2).floor();
+        double result = number1.toDouble() / number2.toDouble();
+        return result;
       default:
         return 0;
     }
   }
 
   // A function to generate four options
-  List<String> generateOptions(int correctAnswer) {
+  List<String> generateOptions(dynamic correctAnswer) {
     var rng = new Random();
     Set<String> optionsSet = {};
     optionsSet.add(correctAnswer.toString());  // Add correct answer to options
 
+    // Check the format of the correct answer
+    int decimalCount = 0;
+    if (correctAnswer is double) {
+      String correctStr = correctAnswer.toString();
+      int dotIndex = correctStr.indexOf('.');
+      if(dotIndex != -1) {
+        decimalCount = correctStr.substring(dotIndex + 1).length;
+      }
+    }
+
     // Capture the least significant digit of the correct answer
-    int lastDigitOfCorrectAnswer = correctAnswer % 10;
+    int lastDigitOfCorrectAnswer;
+    if(correctAnswer is int) {
+      lastDigitOfCorrectAnswer = correctAnswer % 10;
+    } else {
+      double lastDigitDouble = (correctAnswer * 10) % 10;
+      lastDigitOfCorrectAnswer = lastDigitDouble.toInt();
+    }
 
     while (optionsSet.length < 4) {
-      int option;
+      dynamic option;
 
       // Generate a number that ends with the same last digit about 50% of the time
       if (rng.nextBool()) {
-        option = correctAnswer + rng.nextInt(21) - 10;
-
-        // Ensure that it has the same last digit as the correct answer
-        option -= option % 10;
-        option += lastDigitOfCorrectAnswer;
+        if(decimalCount == 0) {
+          option = correctAnswer + rng.nextInt(21) - 10;
+          option -= option % 10;
+          option += lastDigitOfCorrectAnswer;
+        } else if(decimalCount == 1) {
+          option = (correctAnswer + rng.nextDouble() * 2 - 1).toStringAsFixed(1);
+        } else {
+          option = (correctAnswer + rng.nextDouble() * 2 - 1).toStringAsFixed(2);
+        }
       } else {
-        option = correctAnswer + rng.nextInt(21) - 10;
+        if(decimalCount == 0) {
+          option = correctAnswer + rng.nextInt(21) - 10;
+        } else if(decimalCount == 1) {
+          option = (correctAnswer + rng.nextDouble() * 2 - 1).toStringAsFixed(1);
+        } else {
+          option = (correctAnswer + rng.nextDouble() * 2 - 1).toStringAsFixed(2);
+        }
       }
 
       optionsSet.add(option.toString());
@@ -279,7 +306,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   }
 
   // Add a checkAnswer function to update the score
-  void checkAnswer(String selectedOption, int correctAnswer) {
+  void checkAnswer(String selectedOption, dynamic correctAnswer) {
     // Cancel the timer regardless of the correctness of the answer
     timer?.cancel();
 
@@ -469,6 +496,14 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     print("Saved Name: $name");  // Debug print statement
   }
 
+  String formatDecimal(String value) {
+    if (value.contains('.')) {
+      return double.parse(value).toStringAsFixed(2);
+    }
+    return value;  // return as-is if no decimal point
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -552,9 +587,10 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
 
                         SizedBox(height: 30),
                         Text(
-                          question,
+                          question.contains('÷') ? formatDecimal(question) : question,  // check if division is present in the question
                           style: GoogleFonts.fredoka(fontSize: 50, color: Colors.purple),
                         ),
+
                         SizedBox(height: 30),
                         GridView.count(
                           shrinkWrap: true,
@@ -564,10 +600,10 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                           mainAxisSpacing: 20,
                           crossAxisSpacing: 20,
                           children: <Widget>[
-                            AnimatedButton(options[0], onPressed: () => checkAnswer(options[0],correctAnswer)),
-                            AnimatedButton(options[1], onPressed: () => checkAnswer(options[1],correctAnswer)),
-                            AnimatedButton(options[2], onPressed: () => checkAnswer(options[2],correctAnswer)),
-                            AnimatedButton(options[3], onPressed: () => checkAnswer(options[3],correctAnswer)),
+                            AnimatedButton(formatDecimal(options[0]), onPressed: () => checkAnswer(options[0], correctAnswer)),
+                            AnimatedButton(formatDecimal(options[1]), onPressed: () => checkAnswer(options[1], correctAnswer)),
+                            AnimatedButton(formatDecimal(options[2]), onPressed: () => checkAnswer(options[2], correctAnswer)),
+                            AnimatedButton(formatDecimal(options[3]), onPressed: () => checkAnswer(options[3], correctAnswer)),
                           ],
                         ),
                       ],
