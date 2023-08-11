@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -40,6 +42,8 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   Timer? totalGameTimer;
   int dataSaved = 0;
   int? highestScore;
+  final FirebaseFirestore firestore = FirebaseFirestore.instance;
+
 
 
   Key key = UniqueKey();
@@ -63,6 +67,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     startTotalGameTimer();
     dataSaved = 0;
   }
+
 
   Future<void> _loadHighestScore() async {
     final score = await DatabaseHelper.instance.queryHighestScore(widget.gameMode.toString());
@@ -407,20 +412,44 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     }
   }
 
-  void _saveGameData() async {
+  void _saveGameDataLocal() async {
     if (_nameController.text.trim().isNotEmpty && dataSaved == 0) {
+
+      // Local data saving logic
       Map<String, dynamic> row = {
         DatabaseHelper.columnName: _nameController.text,
         DatabaseHelper.columnScore: score,
         DatabaseHelper.columnGameMode: widget.gameMode.toString(),
         DatabaseHelper.columnTimeElapsed: getReadableTime(totalTime)
-    };
-      print(widget.gameMode);
+      };
+
       final id = await DatabaseHelper.instance.insert(row);
-      print('Saved row: $id');
+
+      var connectivityResult = await (Connectivity().checkConnectivity());
+
+      if (connectivityResult == ConnectivityResult.none) {
+        // No internet connection
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Cannot connect to server'))
+        );
+        return;
+      } else {
+        // Firebase data saving logic
+        CollectionReference games = FirebaseFirestore.instance.collection('endlessModeGameData');
+
+        Map<String, dynamic> firebaseRow = {
+          'columnDatetime': DateTime.now().toIso8601String(),  // Save the current date and time as a string in ISO format
+          'columnName': _nameController.text,
+          'columnScore': score,
+          'columnGameMode': widget.gameMode.toString(),
+          'columnTimeElapsed': getReadableTime(totalTime),
+        };
+
+        await games.add(firebaseRow);
+      }
+
       dataSaved = 1;
     } else {
-      print(widget.gameMode.toString());
       print('Data not saved.');
     }
   }
@@ -585,7 +614,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                         SizedBox(height: 30),
                         ElevatedButton(
                           onPressed: () {
-                            _saveGameData();
+                            _saveGameDataLocal();
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
@@ -605,7 +634,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                         SizedBox(height: 20),
                         ElevatedButton(
                           onPressed: () {
-                            _saveGameData();
+                            _saveGameDataLocal();
                             Navigator.of(context).push(MaterialPageRoute(builder: (context) => WallOfFameScreen()));
                           },  // Add functionality to go to Wall of Fame
                           child: Text('Wall of Fame', style: GoogleFonts.fredoka(color: Colors.white)),
