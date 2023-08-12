@@ -4,6 +4,8 @@ import 'dart:math';
 import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -15,6 +17,7 @@ import 'package:technomaths/enums/game_mode.dart';
 import 'package:technomaths/enums/game_speed.dart';
 
 import '../database/database_helper.dart';
+import '../utils/device_uuid_util.dart';
 
 
 class GameScreen extends StatefulWidget {
@@ -49,7 +52,6 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   int _numRewardedLoadAttempts = 0;
   static const int maxFailedLoadAttempts = 3;
 
-
   static final AdRequest request = AdRequest(
     keywords: <String>['foo', 'bar'],
     contentUrl: 'http://foo.com/bar.html',
@@ -82,6 +84,25 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     startTotalGameTimer();
     dataSaved = 0;
     canRevive = true;
+  }
+
+  Future<String?> getUniqueDeviceID() async {
+    final DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+    if (kIsWeb) {
+      return null;
+    } else {
+      switch (defaultTargetPlatform) {
+        case TargetPlatform.android:
+          AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+          return '${androidInfo.brand}-${androidInfo.model}-${androidInfo.product}-${androidInfo.fingerprint}';
+        case TargetPlatform.iOS:
+          IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
+          return iosInfo.identifierForVendor;
+      // Add more platforms if needed.
+        default:
+          return null;
+      }
+    }
   }
 
   void _createRewardedAd() {
@@ -507,7 +528,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     }
   }
 
-  void _saveGameDataLocal() async {
+  void _saveGameData() async {
     if (_nameController.text.trim().isNotEmpty && dataSaved == 0) {
 
       // Local data saving logic
@@ -531,9 +552,13 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       } else {
         // Firebase data saving logic
         CollectionReference games = FirebaseFirestore.instance.collection('endlessModeGameData');
+        String? deviceInfo = await getUniqueDeviceID();
+        String deviceUID = await DeviceUUIDUtil.getDeviceUUID();
 
         Map<String, dynamic> firebaseRow = {
           'datetime': DateTime.now().toIso8601String(),  // Save the current date and time as a string in ISO format
+          'deviceInfo': deviceInfo,
+          'deviceUID': deviceUID,
           'name': _nameController.text,
           'score': score,
           'gameMode': widget.gameMode.toString(),
@@ -741,7 +766,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                         ],
                         ElevatedButton(
                           onPressed: () {
-                            _saveGameDataLocal();
+                            _saveGameData();
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
@@ -761,7 +786,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                         SizedBox(height: 20),
                         ElevatedButton(
                           onPressed: () {
-                            _saveGameDataLocal();
+                            _saveGameData();
                             Navigator.of(context).push(MaterialPageRoute(builder: (context) => WallOfFameScreen(
                               gameMode: widget.gameMode,
                             )));
