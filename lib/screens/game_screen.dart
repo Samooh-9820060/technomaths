@@ -598,14 +598,14 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: lives!= 0 ? AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Colors.purple, size: 30),
           onPressed: () => Navigator.pop(context),
         ),
-      ),
+      ) : null,
       body: Stack(
         children: [
           // Main game screen
@@ -783,7 +783,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                             minimumSize: Size(MediaQuery.of(context).size.width * 0.4, 50), // Button size is 40% of screen width and has a fixed height of 50.
                           ),
                         ),
-                        SizedBox(height: 20),
+                        SizedBox(height: 15),
                         ElevatedButton(
                           onPressed: () {
                             _saveGameData();
@@ -797,10 +797,11 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                             minimumSize: Size(MediaQuery.of(context).size.width * 0.4, 50), // Button size is 40% of screen width and has a fixed height of 50.
                           ),
                         ),
-                        SizedBox(height: 20),
+
+                        SizedBox(height: 15),
                         ElevatedButton(
-                          onPressed: () {},  // Add functionality to go to Rate screen
-                          child: Text('Rate the Game', style: GoogleFonts.fredoka(color: Colors.white)),
+                          onPressed: () => Navigator.pop(context), // Add functionality to go to Rate screen
+                          child: Text('Back', style: GoogleFonts.fredoka(color: Colors.white)),
                           style: ElevatedButton.styleFrom(
                             primary: Colors.purple, // This replaces the 'color' property
                             minimumSize: Size(MediaQuery.of(context).size.width * 0.4, 50), // Button size is 40% of screen width and has a fixed height of 50.

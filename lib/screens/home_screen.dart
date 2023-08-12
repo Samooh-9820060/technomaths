@@ -36,6 +36,8 @@ class HomeScreen extends StatelessWidget {
                     builder: (context) => WallOfFameScreen(
                       gameMode: GameMode.Addition,
                     )));
+              }),
+              AnimatedButton('Rate the Game', onPressed: () {
                 // Code to go to the wall of fame
               }),
               AnimatedButton('Quit', onPressed: () {
