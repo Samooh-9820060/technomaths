@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 
 import '../database/database_helper.dart';
+import '../utils/device_uuid_util.dart';
 
 class WallOfFameScreen extends StatefulWidget {
   GameMode gameMode;
@@ -23,6 +24,8 @@ class _WallOfFameScreenState extends State<WallOfFameScreen> {
   List<Map<String, dynamic>> scores = [];
   List<Map<String, dynamic>> scores24h = [];
   List<Map<String, dynamic>> allTimeScores = [];
+  List<Map<String, dynamic>> personalScores = [];
+
 
   int rowsPerPage = 10; // Number of rows to show per page
   GameMode selectedMode = GameMode.Addition;
@@ -33,30 +36,62 @@ class _WallOfFameScreenState extends State<WallOfFameScreen> {
     super.initState();
     selectedMode = widget.gameMode;
     _loadScores();  // for local scores
-    _load24hScores().then((fetchedScores) {
-      setState(() {
-        scores24h = fetchedScores;
-      });
-    });
     _loadAllTimeScores().then((fetchedScores) {
       setState(() {
         allTimeScores = fetchedScores;
       });
+      _load24hScores().then((fetchedScores) {
+        setState(() {
+          scores24h = fetchedScores;
+        });
+      });
+      _fetchPersonalScores();
+    });
+
+  }
+
+  Future<void> _fetchPersonalScores() async {
+    String deviceUUID = await DeviceUUIDUtil.getDeviceUUID();
+
+    // Filter scores based on deviceUUID and sort them
+    List<Map<String, dynamic>> filteredScores = allTimeScores
+        .where((score) => score['deviceUID'] == deviceUUID)
+        .where((score) => score['gameMode'] == selectedMode.toString())
+        .toList();
+
+    // Sort the scores in descending order
+    filteredScores.sort((a, b) => b['score'].compareTo(a['score']));
+
+    setState(() {
+      personalScores = filteredScores;
     });
   }
 
+
+
+  int? _getPersonalBestRank(List<Map<String, dynamic>> scores) {
+    if (personalScores != null && personalScores!.isNotEmpty) {
+      var personalBest = personalScores![0]['score'];
+      for (int i = 0; i < scores.length; i++) {
+        if (scores[i]['score'] <= personalBest) {
+          return i + 1;
+        }
+      }
+    }
+    return null;
+  }
 
   Future<List<Map<String, dynamic>>> _load24hScores() async {
     final endTime = DateTime.now().add(Duration(minutes: 1));
     final startTime = endTime.subtract(Duration(hours: 24));
 
-    QuerySnapshot snapshot = await FirebaseFirestore.instance
-        .collection('endlessModeGameData')
-        .where('datetime', isGreaterThan: startTime.toIso8601String())
-        .where('datetime', isLessThan: endTime.toIso8601String())
-        .get();
-
-    List<Map<String, dynamic>> fetchedScores = snapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
+    // Filter scores that fall within the last 24 hours from the allTimeScores list
+    List<Map<String, dynamic>> fetchedScores = allTimeScores
+        .where((score) {
+      DateTime scoreDateTime = DateTime.parse(score['datetime']);
+      return scoreDateTime.isAfter(startTime) && scoreDateTime.isBefore(endTime);
+    })
+        .toList();
 
     fetchedScores.sort((a, b) {
       int compareScore = b['score'].compareTo(a['score']);
@@ -150,9 +185,9 @@ class _WallOfFameScreenState extends State<WallOfFameScreen> {
           ),
           child: TabBarView(
             children: [
-              _buildScoreList(scores, selectedMode),
-              _buildScoreList(scores24h, selectedMode),
-              _buildScoreList(allTimeScores, selectedMode),
+              _buildScoreList(scores, selectedMode, 'local'),
+              _buildScoreList(scores24h, selectedMode, '24h'),
+              _buildScoreList(allTimeScores, selectedMode, 'allTime'),
             ],
           ),
         ),
@@ -160,13 +195,14 @@ class _WallOfFameScreenState extends State<WallOfFameScreen> {
     );
   }
 
-  Widget _buildScoreList(List<Map<String, dynamic>> scores, GameMode mode) {
+  Widget _buildScoreList(List<Map<String, dynamic>> scores, GameMode mode, String tabType) {
     var filteredScores = scores.where((score) => score['gameMode'] == mode.toString()).toList();
+    int? personalBestRank = _getPersonalBestRank(filteredScores);
 
     return SingleChildScrollView(
       child: Container(
         margin: EdgeInsets.all(10.0),
-        padding: EdgeInsets.symmetric(vertical: 20.0, horizontal: 15.0), // Slightly increased padding
+        padding: EdgeInsets.symmetric(vertical: 20.0, horizontal: 15.0),
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.9),
           borderRadius: BorderRadius.circular(15),
@@ -178,80 +214,104 @@ class _WallOfFameScreenState extends State<WallOfFameScreen> {
             ),
           ],
         ),
-        child: PaginatedDataTable(
-          header: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Scores',
-                  style: GoogleFonts.fredoka(fontWeight: FontWeight.bold, fontSize: 24),
-                  overflow: TextOverflow.ellipsis,
+        child: Column(
+          children: [
+            if (personalBestRank != null && personalScores != null && personalScores!.isNotEmpty && tabType != 'local')
+              Container(
+                margin: EdgeInsets.only(bottom: 16.0),
+                padding: EdgeInsets.all(8.0),
+                decoration: BoxDecoration(
+                  color: Colors.amber[100],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    Text(
+                      "Your Best Score: ${personalScores![0]['score']}",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    Spacer(),
+                    Text("Rank: $personalBestRank"),
+                  ],
                 ),
               ),
-              SizedBox(width: 8),
-              Container(
-                padding: EdgeInsets.symmetric(vertical: 5.0, horizontal: 10.0),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.deepPurple, Colors.blueAccent],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+            PaginatedDataTable(
+              header: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Scores',
+                      style: GoogleFonts.fredoka(fontWeight: FontWeight.bold, fontSize: 24),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                  borderRadius: BorderRadius.circular(12.0),
-                ),
-                child: PopupMenuButton<GameMode>(
-                  onSelected: (GameMode mode) {
-                    setState(() {
-                      selectedMode = mode;
-                    });
-                  },
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        selectedMode.toString().split('.').last,
-                        style: GoogleFonts.fredoka(fontWeight: FontWeight.normal, fontSize: 18, color: Colors.white),
-                        overflow: TextOverflow.ellipsis,
+                  SizedBox(width: 8),
+                  Container(
+                    padding: EdgeInsets.symmetric(vertical: 5.0, horizontal: 10.0),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Colors.deepPurple, Colors.blueAccent],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
-                      SizedBox(width: 8),
-                      Icon(Icons.arrow_drop_down, color: Colors.white),
-                    ],
-                  ),
-                  itemBuilder: (BuildContext context) => GameMode.values.map((GameMode mode) {
-                    return PopupMenuItem<GameMode>(
-                      value: mode,
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    child: PopupMenuButton<GameMode>(
+                      onSelected: (GameMode mode) {
+                        setState(() {
+                          selectedMode = mode;
+                        });
+                        _fetchPersonalScores();
+                      },
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            mode.toString().split('.').last,
-                            style: GoogleFonts.fredoka(fontWeight: FontWeight.normal, fontSize: 16),
+                            selectedMode.toString().split('.').last,
+                            style: GoogleFonts.fredoka(fontWeight: FontWeight.normal, fontSize: 18, color: Colors.white),
                             overflow: TextOverflow.ellipsis,
                           ),
-                          Icon(_getIconForMode(mode), color: Colors.deepPurple),
+                          SizedBox(width: 8),
+                          Icon(Icons.arrow_drop_down, color: Colors.white),
                         ],
                       ),
-                    );
-                  }).toList(),
-                ),
+                      itemBuilder: (BuildContext context) => GameMode.values.map((GameMode mode) {
+                        return PopupMenuItem<GameMode>(
+                          value: mode,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                mode.toString().split('.').last,
+                                style: GoogleFonts.fredoka(fontWeight: FontWeight.normal, fontSize: 16),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Icon(_getIconForMode(mode), color: Colors.deepPurple),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-          columns: [
-            DataColumn(
-              label: Center(child: Text('#', style: GoogleFonts.fredoka(fontWeight: FontWeight.bold, fontSize: 18))),
-            ),
-            DataColumn(
-              label: Center(child: Text('Name', style: GoogleFonts.fredoka(fontWeight: FontWeight.bold, fontSize: 18))),
-            ),
-            DataColumn(
-              label: Center(child: Text('Score', style: GoogleFonts.fredoka(fontWeight: FontWeight.bold, fontSize: 18))),
-            ),
-            DataColumn(
-              label: Center(child: Text('Time', style: GoogleFonts.fredoka(fontWeight: FontWeight.bold, fontSize: 18))),
+              columns: [
+                DataColumn(
+                  label: Center(child: Text('#', style: GoogleFonts.fredoka(fontWeight: FontWeight.bold, fontSize: 18))),
+                ),
+                DataColumn(
+                  label: Center(child: Text('Name', style: GoogleFonts.fredoka(fontWeight: FontWeight.bold, fontSize: 18))),
+                ),
+                DataColumn(
+                  label: Center(child: Text('Score', style: GoogleFonts.fredoka(fontWeight: FontWeight.bold, fontSize: 18))),
+                ),
+                DataColumn(
+                  label: Center(child: Text('Time', style: GoogleFonts.fredoka(fontWeight: FontWeight.bold, fontSize: 18))),
+                ),
+              ],
+              source: _DataTableSource(filteredScores),
             ),
           ],
-          source: _DataTableSource(filteredScores),
         ),
       ),
     );
