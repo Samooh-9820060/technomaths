@@ -9,10 +9,13 @@ class AnimatedButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    double fontSize = screenWidth < 360 ? 16 : 20;  // Adjust values as per your needs
+
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 8),
       child: Container(
-        width: MediaQuery.of(context).size.width * 0.5, // 50% of screen width
+        width: screenWidth * 0.5,
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
             padding: EdgeInsets.symmetric(horizontal: 30, vertical: 20), // Reduced padding
@@ -24,9 +27,12 @@ class AnimatedButton extends StatelessWidget {
             elevation: 10,
           ),
           onPressed: onPressed,
-          child: Text(
-            text,
-            style: GoogleFonts.fredoka(fontSize: 20, color: Colors.white),
+          child: FittedBox(
+            fit: BoxFit.fitWidth, // This line ensures the content scales correctly.
+            child: Text(
+              text,
+              style: GoogleFonts.fredoka(fontSize: fontSize, color: Colors.white),
+            ),
           ),
         ),
       ),
