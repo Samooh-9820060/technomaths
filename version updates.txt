@@ -1,0 +1,6 @@
+1.0.0 
+
+released
+
+1.0.1
+Wall of fame updated - Your best score feature added
