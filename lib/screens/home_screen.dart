@@ -4,7 +4,7 @@ import 'package:technomaths/enums/game_mode.dart';
 import 'package:technomaths/screens/wall_of_fame.dart';
 import 'package:technomaths/widgets/animated_buttons.dart';
 import 'package:flutter/services.dart'; // Required for SystemNavigator
-import 'package:technomaths/screens/endless_mode_screen.dart'; // Add this import
+import 'package:technomaths/screens/endless_mode_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -22,7 +22,7 @@ class HomeScreen extends StatelessWidget {
                 style: GoogleFonts.fredoka(fontSize: 40, color: Colors.purple),
               ),
               SizedBox(height: 50), // Add this for extra space
-              AnimatedButton('Endless Mode', onPressed: () {
+              AnimatedButton('Endless', onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => EndlessModeScreen()),
