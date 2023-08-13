@@ -1,5 +1,9 @@
+import 'dart:math';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:technomaths/enums/game_mode.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -26,6 +30,10 @@ class _WallOfFameScreenState extends State<WallOfFameScreen> {
   List<Map<String, dynamic>> allTimeScores = [];
   List<Map<String, dynamic>> personalScores = [];
 
+  InterstitialAd? _interstitialAd;
+  int _numInterstitialLoadAttempts = 0;
+  int maxFailedLoadAttempts = 3;
+
 
   int rowsPerPage = 10; // Number of rows to show per page
   GameMode selectedMode = GameMode.Addition;
@@ -34,6 +42,7 @@ class _WallOfFameScreenState extends State<WallOfFameScreen> {
   @override
   void initState() {
     super.initState();
+    _createInterstitialAd();
     selectedMode = widget.gameMode;
     _loadScores();  // for local scores
     _loadAllTimeScores().then((fetchedScores) {
@@ -47,7 +56,49 @@ class _WallOfFameScreenState extends State<WallOfFameScreen> {
       });
       _fetchPersonalScores();
     });
+  }
 
+  void _createInterstitialAd() {
+    InterstitialAd.load(
+        adUnitId: Platform.isAndroid
+            ? 'ca-app-pub-6109906096472807/4941429048'
+            : 'ca-app-pub-6109906096472807/4941429048',
+        request: AdRequest(),
+        adLoadCallback: InterstitialAdLoadCallback(
+          onAdLoaded: (InterstitialAd ad) {
+            _interstitialAd = ad;
+            _numInterstitialLoadAttempts = 0;
+            showAd();
+          },
+          onAdFailedToLoad: (LoadAdError error) {
+            _interstitialAd = null;
+            _numInterstitialLoadAttempts += 1;
+            if (_numInterstitialLoadAttempts < maxFailedLoadAttempts) {
+              _createInterstitialAd();
+            }
+          },
+        ));
+  }
+
+  void showAd(){
+    var rng = new Random();
+    if (rng.nextInt(100) < 30) {
+      if (_interstitialAd == null) {
+        return;
+      }
+      _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
+          onAdDismissedFullScreenContent: (InterstitialAd ad) {
+            ad.dispose();
+            //_createInterstitialAd();  // Load another ad for next time
+          },
+          onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
+            ad.dispose();
+            //_createInterstitialAd();  // Load another ad for next time
+          }
+      );
+
+      _interstitialAd!.show();
+    }
   }
 
   Future<void> _fetchPersonalScores() async {
@@ -90,8 +141,7 @@ class _WallOfFameScreenState extends State<WallOfFameScreen> {
         .where((score) {
       DateTime scoreDateTime = DateTime.parse(score['datetime']);
       return scoreDateTime.isAfter(startTime) && scoreDateTime.isBefore(endTime);
-    })
-        .toList();
+    }).toList();
 
     fetchedScores.sort((a, b) {
       int compareScore = b['score'].compareTo(a['score']);
