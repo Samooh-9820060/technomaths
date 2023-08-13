@@ -45,6 +45,9 @@ dependencies:
   google_mobile_ads: ^3.0.0
   device_info_plus: ^9.0.3
   uuid: ^3.0.7
+  flutter_shimmer: ^2.1.2
+  font_awesome_flutter: ^10.5.0
+  shimmer: ^3.0.0
 
 dev_dependencies:
   flutter_test:
