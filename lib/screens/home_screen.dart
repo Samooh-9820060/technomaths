@@ -13,24 +13,47 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Colors.blueAccent.withOpacity(0.9), Colors.deepPurple.withOpacity(0.2)],
+          ),
+        ),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              Text(
-                'TechnoMaths',
-                style: GoogleFonts.fredoka(fontSize: 40, color: Colors.purple),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: ShaderMask(
+                  shaderCallback: (bounds) => LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Colors.deepPurple, Colors.blue],
+                  ).createShader(Rect.fromLTWH(0, 0, bounds.width, bounds.height)),
+                  child: Text(
+                    'TechnoMaths',
+                    style: GoogleFonts.fredoka(
+                        fontSize: 40, fontWeight: FontWeight.w500, color: Colors.white,
+                      shadows: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.3),
+                          blurRadius: 5,
+                          offset: Offset(3, 3),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-              SizedBox(height: 50), // Add this for extra space
+              SizedBox(height: 50),
               AnimatedButton('Endless', onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => EndlessModeScreen()),
                 );
               }),
-              //AnimatedButton('Levels', onPressed: () {
-                // Code to go to the levels
-              //}),
               AnimatedButton('Wall of Fame', onPressed: () {
                 Navigator.of(context).push(MaterialPageRoute(
                     builder: (context) => WallOfFameScreen(
@@ -38,10 +61,9 @@ class HomeScreen extends StatelessWidget {
                     )));
               }),
               AnimatedButton('Rate the Game', onPressed: () {
-                // Code to go to the wall of fame
+                // Code to rate the game
               }),
               AnimatedButton('Quit', onPressed: () {
-                // Code to quit the app
                 SystemNavigator.pop();
               }),
             ],

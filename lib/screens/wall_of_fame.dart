@@ -61,8 +61,8 @@ class _WallOfFameScreenState extends State<WallOfFameScreen> {
   void _createInterstitialAd() {
     InterstitialAd.load(
         adUnitId: Platform.isAndroid
-            ? 'ca-app-pub-6109906096472807/4941429048'
-            : 'ca-app-pub-6109906096472807/4941429048',
+            ? 'ca-app-pub-3940256099942544/1033173712'
+            : 'ca-app-pub-3940256099942544/1033173712',
         request: AdRequest(),
         adLoadCallback: InterstitialAdLoadCallback(
           onAdLoaded: (InterstitialAd ad) {

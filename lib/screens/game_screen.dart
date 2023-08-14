@@ -598,6 +598,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: lives!= 0 ? AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -608,6 +609,19 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       ) : null,
       body: Stack(
         children: [
+          // Background Gradient
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.blueAccent.withOpacity(0.8),
+                  Colors.deepPurple.withOpacity(0.2)
+                ],
+              ),
+            ),
+          ),
           // Main game screen
           Container(
             child: Column(
@@ -625,10 +639,10 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                             Center(
                               child: Text(
                                 'Time: ${getReadableTime(totalTime)}',
-                                style: GoogleFonts.aBeeZee(
-                                  color: Colors.purple[700],
-                                  fontWeight: FontWeight.bold,
+                                style: GoogleFonts.fredoka(
                                   fontSize: 20,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.white, // Lighter shade of deepPurple for contrast and readability.
                                 ),
                               ),
                             ),
@@ -636,8 +650,8 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                             SizedBox(height: 30),
                             // Progress bar
                             Container(
-                              padding: EdgeInsets.symmetric(horizontal: 30), // Padding for wider bar
-                              height: 10, // Height for progress bar
+                              padding: EdgeInsets.symmetric(horizontal: 30),
+                              height: 10,
                               child: TweenAnimationBuilder(
                                 key: key,
                                 tween: Tween(begin: 1.0, end: 0.0),
@@ -645,9 +659,9 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                                 builder: (context, value, child) {
                                   return LinearProgressIndicator(
                                     value: value,
-                                    minHeight: 30, // Increase height of progress bar
-                                    backgroundColor: Colors.grey[300],
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.purple[700]!),
+                                    minHeight: 30,
+                                    backgroundColor: Colors.white, // Making it slightly transparent.
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurple),
                                   );
                                 },
                               ),
@@ -656,15 +670,24 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                         ),
 
                         SizedBox(height: 30),
+                        //hearts
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(lives, (index) => Icon(Icons.favorite, color: Colors.purple, size: 40)).toList(),
+                          children: List.generate(
+                            lives,
+                                (index) => Icon(Icons.favorite, size: 40, color: Colors.red),
+                          ).toList(),
                         ),
                         SizedBox(height: 30),
+
+                        //score
                         Center(
                           child: Text(
                             'Score: $score',
-                            style: GoogleFonts.fredoka(color: Colors.purple, fontSize: 32),
+                            style: GoogleFonts.fredoka(
+                              color: Colors.white, // Lighter shade of blueAccent
+                              fontSize: 32,
+                            ),
                           ),
                         ),
                         // Animated score pop-up
@@ -672,14 +695,22 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                           opacity: _scoreAnimation,
                           child: Text(
                             '+1',
-                            style: GoogleFonts.fredoka(color: Colors.green, fontSize: 32),
+                            style: GoogleFonts.fredoka(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontSize: 32
+                            ),
                           ),
                         ),
 
+
                         SizedBox(height: 30),
+                        //question
                         Text(
-                          question.contains('÷') ? formatDecimal(question) : question,  // check if division is present in the question
-                          style: GoogleFonts.fredoka(fontSize: 50, color: Colors.purple),
+                          question.contains('÷') ? formatDecimal(question) : question,
+                          style: GoogleFonts.fredoka(
+                            fontSize: 50,
+                            color: Colors.white,
+                          ),
                         ),
 
                         SizedBox(height: 30),
