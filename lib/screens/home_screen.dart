@@ -7,18 +7,38 @@ import 'package:technomaths/widgets/animated_buttons.dart';
 import 'package:flutter/services.dart'; // Required for SystemNavigator
 import 'package:technomaths/screens/endless_mode_screen.dart';
 
+import '../themes/theme_data.dart';
+
 class HomeScreen extends StatelessWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    ThemeData currentTheme = Theme.of(context);
+
+    // Determine which custom theme is currently active
+    CustomTheme? activeTheme;
+    for (var theme in AppThemes.themes.entries) {
+      if (theme.value.themeData.primaryColor == currentTheme.primaryColor) {
+        activeTheme = theme.key;
+        break;
+      }
+    }
+
+    LinearGradient? backgroundGradient = activeTheme != null
+        ? AppThemes.buttonGradients[activeTheme]
+        : LinearGradient(colors: [Colors.grey, Colors.grey]);  // Default to a grey gradient if theme is undetermined
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Colors.blueAccent.withOpacity(0.9), Colors.deepPurple.withOpacity(0.2)],
+            colors: [
+              currentTheme.primaryColor.withOpacity(0.8),  // Lightened this opacity a bit
+              currentTheme.colorScheme.secondary.withOpacity(0.1)  // Lightened this opacity more
+            ],
           ),
         ),
         child: Center(
@@ -28,20 +48,20 @@ class HomeScreen extends StatelessWidget {
               FittedBox(
                 fit: BoxFit.scaleDown,
                 child: ShaderMask(
-                  shaderCallback: (bounds) => LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Colors.deepPurple, Colors.blue],
-                  ).createShader(Rect.fromLTWH(0, 0, bounds.width, bounds.height)),
+                  shaderCallback: (bounds) =>
+                  backgroundGradient?.createShader(Rect.fromLTWH(0, 0, bounds.width, bounds.height))
+                      ?? LinearGradient(colors: [Colors.transparent]).createShader(Rect.fromLTWH(0, 0, bounds.width, bounds.height)),
                   child: Text(
                     'TechnoMaths',
-                    style: GoogleFonts.fredoka(
-                        fontSize: 40, fontWeight: FontWeight.w500, color: Colors.white,
+                    style: currentTheme.textTheme.displayLarge?.copyWith(
+                      fontSize: 40,
+                      fontWeight: FontWeight.w500,
+                      color: currentTheme.colorScheme.onPrimary,
                       shadows: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.3),
-                          blurRadius: 5,
-                          offset: Offset(3, 3),
+                        Shadow(
+                          offset: Offset(2, 2),
+                          blurRadius: 3.0,
+                          color: Color.fromARGB(255, 0, 0, 0),
                         ),
                       ],
                     ),

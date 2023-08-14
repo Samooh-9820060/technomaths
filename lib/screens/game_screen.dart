@@ -17,6 +17,7 @@ import 'package:technomaths/enums/game_mode.dart';
 import 'package:technomaths/enums/game_speed.dart';
 
 import '../database/database_helper.dart';
+import '../themes/theme_data.dart';
 import '../utils/device_uuid_util.dart';
 
 
@@ -606,19 +607,46 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
+
+    ThemeData currentTheme = Theme.of(context);
+
+    // Determine which custom theme is currently active
+    CustomTheme? activeTheme;
+    for (var theme in AppThemes.themes.entries) {
+      if (theme.value.themeData.primaryColor == currentTheme.primaryColor) {
+        activeTheme = theme.key;
+        break;
+      }
+    }
+
+    LinearGradient? backgroundGradient = activeTheme != null
+        ? AppThemes.buttonGradients[activeTheme]
+        : LinearGradient(colors: [Colors.grey, Colors.grey]);  // Default to a grey gradient if theme is undetermined
+    Color backgroundColor = AppThemes.getBackgroundColor(activeTheme!);
+
+
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: lives!= 0 ? AppBar(
+      appBar: lives != 0
+          ? AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.purple, size: 30),
+          icon: Icon(
+            Icons.arrow_back,
+            color: currentTheme.colorScheme.secondary,
+            size: 30,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
-      ) : null,
+      )
+          : null,
       body: AnimatedContainer(
         duration: Duration(milliseconds: 300),
-        color: _backgroundColor,
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          gradient: backgroundGradient,  // Using the gradient from the active theme
+        ),
         child: Stack(
           children: [
             // Background Gradient
@@ -647,14 +675,13 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                           Column(
                             children: [
                               // Timer Text
-                              // Total time elapsed display
                               Center(
                                 child: Text(
                                   'Time: ${getReadableTime(totalTime)}',
-                                  style: GoogleFonts.fredoka(
+                                  style: TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.w500,
-                                    color: Colors.white, // Lighter shade of deepPurple for contrast and readability.
+                                    color: Theme.of(context).secondaryHeaderColor,
                                   ),
                                 ),
                               ),
@@ -687,7 +714,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: List.generate(
                               lives,
-                                  (index) => Icon(Icons.favorite, size: 40, color: Colors.red),
+                                  (index) => Icon(Icons.favorite, size: 40, color: Theme.of(context).secondaryHeaderColor),
                             ).toList(),
                           ),
                           SizedBox(height: 30),
@@ -696,8 +723,8 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                           Center(
                             child: Text(
                               'Score: $score',
-                              style: GoogleFonts.fredoka(
-                                color: Colors.white, // Lighter shade of blueAccent
+                              style: TextStyle(
+                                color: Theme.of(context).secondaryHeaderColor,
                                 fontSize: 32,
                               ),
                             ),
@@ -762,8 +789,8 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    backgroundColor: Colors.white70, // Added a bit of transparency to keep the theme feel
-                    title: Text('Game Over', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: Colors.red, fontSize: 32)),
+                    backgroundColor: currentTheme.dialogBackgroundColor,
+                    title: Text('Game Over', textAlign: TextAlign.center, style: currentTheme.textTheme.headline4),
                     content: SingleChildScrollView(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
