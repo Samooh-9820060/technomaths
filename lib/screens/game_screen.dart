@@ -51,6 +51,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   RewardedAd? _rewardedAd;
   int _numRewardedLoadAttempts = 0;
   static const int maxFailedLoadAttempts = 3;
+  Color _backgroundColor = Colors.transparent;
 
   static final AdRequest request = AdRequest(
     keywords: <String>['foo', 'bar'],
@@ -421,6 +422,14 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     } else {
       setState(() {
         lives--;
+        _backgroundColor = Colors.red;
+      });
+
+
+      Future.delayed(const Duration(milliseconds: 300), () {
+        setState(() {
+          _backgroundColor = Colors.transparent; // Reset the color after a brief delay
+        });
       });
 
       // If game isn't over, generate a new question
@@ -598,6 +607,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: lives!= 0 ? AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -606,215 +616,219 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
           onPressed: () => Navigator.pop(context),
         ),
       ) : null,
-      body: Stack(
-        children: [
-          // Main game screen
-          Container(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Expanded(
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Column(
-                          children: [
-                            // Timer Text
-                            // Total time elapsed display
-                            Center(
-                              child: Text(
-                                'Time: ${getReadableTime(totalTime)}',
-                                style: GoogleFonts.aBeeZee(
-                                  color: Colors.purple[700],
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 20,
+      body: AnimatedContainer(
+        duration: Duration(milliseconds: 300),
+        color: _backgroundColor,
+        child: Stack(
+          children: [
+            // Main game screen
+            Container(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Expanded(
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Column(
+                            children: [
+                              // Timer Text
+                              // Total time elapsed display
+                              Center(
+                                child: Text(
+                                  'Time: ${getReadableTime(totalTime)}',
+                                  style: GoogleFonts.aBeeZee(
+                                    color: Colors.purple[700],
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 20,
+                                  ),
+                                ),
+                              ),
+                              // Spacer for a gap between text and progress bar
+                              SizedBox(height: 30),
+                              // Progress bar
+                              Container(
+                                padding: EdgeInsets.symmetric(horizontal: 30), // Padding for wider bar
+                                height: 10, // Height for progress bar
+                                child: TweenAnimationBuilder(
+                                  key: key,
+                                  tween: Tween(begin: 1.0, end: 0.0),
+                                  duration: Duration(seconds: remainingTime),
+                                  builder: (context, value, child) {
+                                    return LinearProgressIndicator(
+                                      value: value,
+                                      minHeight: 30, // Increase height of progress bar
+                                      backgroundColor: Colors.grey[300],
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.purple[700]!),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          SizedBox(height: 30),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: List.generate(lives, (index) => Icon(Icons.favorite, color: Colors.red, size: 40)).toList(),
+                          ),
+                          SizedBox(height: 30),
+                          Center(
+                            child: Text(
+                              'Score: $score',
+                              style: GoogleFonts.fredoka(color: Colors.purple, fontSize: 32),
+                            ),
+                          ),
+                          // Animated score pop-up
+                          FadeTransition(
+                            opacity: _scoreAnimation,
+                            child: Text(
+                              '+1',
+                              style: GoogleFonts.fredoka(color: Colors.green, fontSize: 32),
+                            ),
+                          ),
+
+                          SizedBox(height: 30),
+                          Text(
+                            question.contains('÷') ? formatDecimal(question) : question,  // check if division is present in the question
+                            style: GoogleFonts.fredoka(fontSize: 50, color: Colors.purple),
+                          ),
+
+                          SizedBox(height: 30),
+                          GridView.count(
+                            shrinkWrap: true,
+                            crossAxisCount: 2,
+                            childAspectRatio: 2,
+                            padding: const EdgeInsets.all(20),
+                            mainAxisSpacing: 20,
+                            crossAxisSpacing: 20,
+                            children: <Widget>[
+                              AnimatedButton(formatDecimal(options[0]), onPressed: () => checkAnswer(options[0], correctAnswer)),
+                              AnimatedButton(formatDecimal(options[1]), onPressed: () => checkAnswer(options[1], correctAnswer)),
+                              AnimatedButton(formatDecimal(options[2]), onPressed: () => checkAnswer(options[2], correctAnswer)),
+                              AnimatedButton(formatDecimal(options[3]), onPressed: () => checkAnswer(options[3], correctAnswer)),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Game Over overlay
+            if (lives == 0) ...[
+              BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                child: Container(
+                  color: Colors.black.withOpacity(0.4),
+                ),
+              ),
+              Center(
+                child: Container(
+                  width: MediaQuery.of(context).size.width * 0.8, // 80% of screen width
+                  child: AlertDialog(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    backgroundColor: Colors.white,
+                    title: Text('Game Over', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: Colors.red, fontSize: 32)),
+                    content: SingleChildScrollView(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: <Widget>[
+                          Text('Your Name', textAlign: TextAlign.center,),
+                          TextField(
+                            controller: _nameController,
+                            textAlign: TextAlign.center,
+                            onChanged: (value) {
+                              _savePlayerName(value);
+                            },
+                          ),  // User can enter their name here
+                          SizedBox(height: 20),
+                          Text('Your Score: $score', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: Colors.purple, fontSize: 24)),
+                          SizedBox(height: 20),
+                          Text('Best Score: $highestScore', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: Colors.purple, fontSize: 24)),
+                          SizedBox(height: 30),
+                          if (canRevive && _rewardedAd != null) ...[
+                            ElevatedButton(
+                              onPressed: () {
+                                _showRewardedAd();
+                              },
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.play_arrow, color: Colors.white),  // Representing a video play button
+                                  SizedBox(width: 10),
+                                  Text('Revive', style: GoogleFonts.fredoka(color: Colors.white, fontSize: 18)),
+                                ],
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                primary: Colors.green[500],
+                                onPrimary: Colors.white,
+                                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                                minimumSize: Size(MediaQuery.of(context).size.width * 0.7, 50),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
                                 ),
                               ),
                             ),
-                            // Spacer for a gap between text and progress bar
-                            SizedBox(height: 30),
-                            // Progress bar
-                            Container(
-                              padding: EdgeInsets.symmetric(horizontal: 30), // Padding for wider bar
-                              height: 10, // Height for progress bar
-                              child: TweenAnimationBuilder(
-                                key: key,
-                                tween: Tween(begin: 1.0, end: 0.0),
-                                duration: Duration(seconds: remainingTime),
-                                builder: (context, value, child) {
-                                  return LinearProgressIndicator(
-                                    value: value,
-                                    minHeight: 30, // Increase height of progress bar
-                                    backgroundColor: Colors.grey[300],
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.purple[700]!),
-                                  );
-                                },
-                              ),
-                            ),
+                            SizedBox(height: 20),
                           ],
-                        ),
-
-                        SizedBox(height: 30),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(lives, (index) => Icon(Icons.favorite, color: Colors.purple, size: 40)).toList(),
-                        ),
-                        SizedBox(height: 30),
-                        Center(
-                          child: Text(
-                            'Score: $score',
-                            style: GoogleFonts.fredoka(color: Colors.purple, fontSize: 32),
-                          ),
-                        ),
-                        // Animated score pop-up
-                        FadeTransition(
-                          opacity: _scoreAnimation,
-                          child: Text(
-                            '+1',
-                            style: GoogleFonts.fredoka(color: Colors.green, fontSize: 32),
-                          ),
-                        ),
-
-                        SizedBox(height: 30),
-                        Text(
-                          question.contains('÷') ? formatDecimal(question) : question,  // check if division is present in the question
-                          style: GoogleFonts.fredoka(fontSize: 50, color: Colors.purple),
-                        ),
-
-                        SizedBox(height: 30),
-                        GridView.count(
-                          shrinkWrap: true,
-                          crossAxisCount: 2,
-                          childAspectRatio: 2,
-                          padding: const EdgeInsets.all(20),
-                          mainAxisSpacing: 20,
-                          crossAxisSpacing: 20,
-                          children: <Widget>[
-                            AnimatedButton(formatDecimal(options[0]), onPressed: () => checkAnswer(options[0], correctAnswer)),
-                            AnimatedButton(formatDecimal(options[1]), onPressed: () => checkAnswer(options[1], correctAnswer)),
-                            AnimatedButton(formatDecimal(options[2]), onPressed: () => checkAnswer(options[2], correctAnswer)),
-                            AnimatedButton(formatDecimal(options[3]), onPressed: () => checkAnswer(options[3], correctAnswer)),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Game Over overlay
-          if (lives == 0) ...[
-            BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-              child: Container(
-                color: Colors.black.withOpacity(0.4),
-              ),
-            ),
-            Center(
-              child: Container(
-                width: MediaQuery.of(context).size.width * 0.8, // 80% of screen width
-                child: AlertDialog(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  backgroundColor: Colors.white,
-                  title: Text('Game Over', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: Colors.red, fontSize: 32)),
-                  content: SingleChildScrollView(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: <Widget>[
-                        Text('Your Name', textAlign: TextAlign.center,),
-                        TextField(
-                          controller: _nameController,
-                          textAlign: TextAlign.center,
-                          onChanged: (value) {
-                            _savePlayerName(value);
-                          },
-                        ),  // User can enter their name here
-                        SizedBox(height: 20),
-                        Text('Your Score: $score', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: Colors.purple, fontSize: 24)),
-                        SizedBox(height: 20),
-                        Text('Best Score: $highestScore', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: Colors.purple, fontSize: 24)),
-                        SizedBox(height: 30),
-                        if (canRevive && _rewardedAd != null) ...[
                           ElevatedButton(
                             onPressed: () {
-                              _showRewardedAd();
-                            },
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.play_arrow, color: Colors.white),  // Representing a video play button
-                                SizedBox(width: 10),
-                                Text('Revive', style: GoogleFonts.fredoka(color: Colors.white, fontSize: 18)),
-                              ],
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              primary: Colors.green[500],
-                              onPrimary: Colors.white,
-                              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                              minimumSize: Size(MediaQuery.of(context).size.width * 0.7, 50),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 20),
-                        ],
-                        ElevatedButton(
-                          onPressed: () {
-                            _saveGameData();
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => GameScreen(
-                                  gameMode: widget.gameMode,
-                                  gameSpeed: GameSpeed.fifteen,
+                              _saveGameData();
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => GameScreen(
+                                    gameMode: widget.gameMode,
+                                    gameSpeed: GameSpeed.fifteen,
+                                  ),
                                 ),
-                              ),
-                            );
-                          },
-                          child: Text('Retry', style: GoogleFonts.fredoka(color: Colors.white)),
-                          style: ElevatedButton.styleFrom(
-                            primary: Colors.purple, // This replaces the 'color' property
-                            minimumSize: Size(MediaQuery.of(context).size.width * 0.4, 50), // Button size is 40% of screen width and has a fixed height of 50.
+                              );
+                            },
+                            child: Text('Retry', style: GoogleFonts.fredoka(color: Colors.white)),
+                            style: ElevatedButton.styleFrom(
+                              primary: Colors.purple, // This replaces the 'color' property
+                              minimumSize: Size(MediaQuery.of(context).size.width * 0.4, 50), // Button size is 40% of screen width and has a fixed height of 50.
+                            ),
                           ),
-                        ),
-                        SizedBox(height: 15),
-                        ElevatedButton(
-                          onPressed: () {
-                            _saveGameData();
-                            Navigator.of(context).push(MaterialPageRoute(builder: (context) => WallOfFameScreen(
-                              gameMode: widget.gameMode,
-                            )));
-                          },  // Add functionality to go to Wall of Fame
-                          child: Text('Wall of Fame', style: GoogleFonts.fredoka(color: Colors.white)),
-                          style: ElevatedButton.styleFrom(
-                            primary: Colors.purple, // This replaces the 'color' property
-                            minimumSize: Size(MediaQuery.of(context).size.width * 0.4, 50), // Button size is 40% of screen width and has a fixed height of 50.
+                          SizedBox(height: 15),
+                          ElevatedButton(
+                            onPressed: () {
+                              _saveGameData();
+                              Navigator.of(context).push(MaterialPageRoute(builder: (context) => WallOfFameScreen(
+                                gameMode: widget.gameMode,
+                              )));
+                            },  // Add functionality to go to Wall of Fame
+                            child: Text('Wall of Fame', style: GoogleFonts.fredoka(color: Colors.white)),
+                            style: ElevatedButton.styleFrom(
+                              primary: Colors.purple, // This replaces the 'color' property
+                              minimumSize: Size(MediaQuery.of(context).size.width * 0.4, 50), // Button size is 40% of screen width and has a fixed height of 50.
+                            ),
                           ),
-                        ),
 
-                        SizedBox(height: 15),
-                        ElevatedButton(
-                          onPressed: () => Navigator.pop(context), // Add functionality to go to Rate screen
-                          child: Text('Back', style: GoogleFonts.fredoka(color: Colors.white)),
-                          style: ElevatedButton.styleFrom(
-                            primary: Colors.purple, // This replaces the 'color' property
-                            minimumSize: Size(MediaQuery.of(context).size.width * 0.4, 50), // Button size is 40% of screen width and has a fixed height of 50.
+                          SizedBox(height: 15),
+                          ElevatedButton(
+                            onPressed: () => Navigator.pop(context), // Add functionality to go to Rate screen
+                            child: Text('Back', style: GoogleFonts.fredoka(color: Colors.white)),
+                            style: ElevatedButton.styleFrom(
+                              primary: Colors.purple, // This replaces the 'color' property
+                              minimumSize: Size(MediaQuery.of(context).size.width * 0.4, 50), // Button size is 40% of screen width and has a fixed height of 50.
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ]
-        ],
+            ]
+          ],
+        ),
       ),
     );
   }
