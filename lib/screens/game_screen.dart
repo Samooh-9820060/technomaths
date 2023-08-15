@@ -639,7 +639,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                                 child: Text(
                                   'Time: ${getReadableTime(totalTime)}',
                                   style: GoogleFonts.aBeeZee(
-                                    color: Colors.purple[700],
+                                    color: Colors.blueAccent[700],
                                     fontWeight: FontWeight.bold,
                                     fontSize: 20,
                                   ),
@@ -660,7 +660,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                                       value: value,
                                       minHeight: 30, // Increase height of progress bar
                                       backgroundColor: Colors.grey[300],
-                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.purple[700]!),
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.blueAccent[700]!),
                                     );
                                   },
                                 ),
@@ -677,7 +677,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                           Center(
                             child: Text(
                               'Score: $score',
-                              style: GoogleFonts.fredoka(color: Colors.purple, fontSize: 32),
+                              style: GoogleFonts.fredoka(color: Colors.blueAccent, fontSize: 32),
                             ),
                           ),
                           // Animated score pop-up
@@ -692,7 +692,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                           SizedBox(height: 30),
                           Text(
                             question.contains('÷') ? formatDecimal(question) : question,  // check if division is present in the question
-                            style: GoogleFonts.fredoka(fontSize: 50, color: Colors.purple),
+                            style: GoogleFonts.fredoka(fontSize: 50, color: Colors.blueAccent),
                           ),
 
                           SizedBox(height: 30),
