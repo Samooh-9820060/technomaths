@@ -26,7 +26,7 @@ class AnimatedButton extends StatelessWidget {
         ),
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
-            padding: EdgeInsets.symmetric(horizontal: 30, vertical: 20), // Reduced padding
+            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20), // Reduced padding
             primary: Colors.transparent, // This will ensure the gradient shows
             onPrimary: Colors.white,
             shadowColor: Colors.transparent, // No shadow since we already have elevation from the container

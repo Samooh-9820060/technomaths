@@ -4,16 +4,16 @@ import 'dart:io';
 import 'package:path/path.dart';
 
 class DatabaseHelper {
-  static final _databaseName = "GameData.db";
-  static final _databaseVersion = 1;
+  static const _databaseName = "GameData.db";
+  static const _databaseVersion = 1;
 
-  static final table = 'endless_game_data';
+  static const table = 'endless_game_data';
 
-  static final columnId = '_id';
-  static final columnName = 'name';
-  static final columnScore = 'score';
-  static final columnGameMode = 'gameMode';
-  static final columnTimeElapsed = 'timeElapsed';
+  static const columnId = '_id';
+  static const columnName = 'name';
+  static const columnScore = 'score';
+  static const columnGameMode = 'gameMode';
+  static const columnTimeElapsed = 'timeElapsed';
 
   // Singleton class
   DatabaseHelper._privateConstructor();
