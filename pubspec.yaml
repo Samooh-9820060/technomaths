@@ -43,6 +43,9 @@ dependencies:
   firebase_core: ^2.15.0
   connectivity_plus: ^4.0.2
   google_mobile_ads: ^3.0.0
+  device_info_plus: ^9.0.3
+  uuid: ^3.0.7
+  url_launcher: ^6.1.12
 
 dev_dependencies:
   flutter_test:

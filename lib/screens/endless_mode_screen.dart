@@ -16,7 +16,7 @@ class EndlessModeScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.purple, size: 30),
+          icon: Icon(Icons.arrow_back, color: Colors.blueAccent, size: 30),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -27,7 +27,7 @@ class EndlessModeScreen extends StatelessWidget {
             children: <Widget>[
               Text(
                 'Choose Endless Mode',
-                style: GoogleFonts.fredoka(fontSize: 30, color: Colors.purple), // Use Google font here
+                style: GoogleFonts.fredoka(fontSize: 30, color: Colors.blueAccent), // Use Google font here
               ),
               SizedBox(height: 50),
               AnimatedButton('Addition', onPressed: () {
