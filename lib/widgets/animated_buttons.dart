@@ -16,15 +16,23 @@ class AnimatedButton extends StatelessWidget {
       padding: EdgeInsets.symmetric(vertical: 8),
       child: Container(
         width: screenWidth * 0.5,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Colors.deepPurple, Colors.blueAccent],
+          ),
+          borderRadius: BorderRadius.circular(10),  // To match the button's border radius
+        ),
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
             padding: EdgeInsets.symmetric(horizontal: 30, vertical: 20), // Reduced padding
-            primary: Colors.purple,
+            primary: Colors.transparent, // This will ensure the gradient shows
             onPrimary: Colors.white,
+            shadowColor: Colors.transparent, // No shadow since we already have elevation from the container
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
             ),
-            elevation: 10,
           ),
           onPressed: onPressed,
           child: FittedBox(

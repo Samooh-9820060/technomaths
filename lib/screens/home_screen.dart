@@ -30,7 +30,7 @@ class HomeScreen extends StatelessWidget {
             children: <Widget>[
               Text(
                 'TechnoMaths',
-                style: GoogleFonts.fredoka(fontSize: 40, color: Colors.purple),
+                style: GoogleFonts.fredoka(fontSize: 40, color: Colors.blueAccent),
               ),
               SizedBox(height: 50), // Add this for extra space
               AnimatedButton('Endless', onPressed: () {
