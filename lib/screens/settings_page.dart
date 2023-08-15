@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
-import 'package:technomaths/models/custom_theme_Data.dart';
-import '../themes/theme_data.dart';
-import '../utils/theme_notifier.dart';
 
 void _showThemeBottomSheet(BuildContext context) {
   showModalBottomSheet(
@@ -15,14 +11,21 @@ void _showThemeBottomSheet(BuildContext context) {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text('Choose Theme', style: GoogleFonts.fredoka(color: Colors.blue[900], fontSize: 22)),
-            ...AppThemes.themes.entries.map((themeEntry) => ListTile(
-              title: Text('${themeEntry.key.toString().split('.').last} Theme', style: GoogleFonts.fredoka(color: Colors.blue[900])),
-                onTap: () {
-                  var themeNotifier = Provider.of<ThemeNotifier>(context, listen: false);
-                  themeNotifier.setTheme(themeEntry.value); // Use the CustomThemeData directly from the themeEntry
-                  Navigator.pop(context);
-                },
-            )).toList(),
+            ListTile(
+              title: Text('Light Theme', style: GoogleFonts.fredoka(color: Colors.blue[900])),
+              onTap: () {
+                // TODO: Apply Light Theme
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              title: Text('Dark Theme', style: GoogleFonts.fredoka(color: Colors.blue[900])),
+              onTap: () {
+                // TODO: Apply Dark Theme
+                Navigator.pop(context);
+              },
+            ),
+            // Add more theme options if you wish
           ],
         ),
       );
@@ -34,63 +37,59 @@ void _showThemeBottomSheet(BuildContext context) {
 class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    ThemeData currentTheme = Theme.of(context);
-
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.deepPurple, // Gradient start color
         title: Text('Settings', style: GoogleFonts.fredoka(fontSize: 22)), // Use a different font
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [
-                currentTheme.primaryColor,
-                currentTheme.colorScheme.secondary
-              ],
+              colors: [Colors.deepPurple, Colors.blueAccent],
             ),
           ),
         ),
       ),
       body: Container(
-        color: currentTheme.colorScheme.background,
+        color: Colors.blue[100],
         child: ListView(
           padding: const EdgeInsets.all(20.0),
           children: [
             ListTile(
               title: Text(
                 'Vibration',
-                style: GoogleFonts.fredoka(color: currentTheme.textTheme.displayLarge?.color),
+                style: GoogleFonts.fredoka(color: Colors.blue[900]),
               ),
               trailing: Switch(
                 value: true, // TODO: Bind this to your actual settings variable
                 onChanged: (bool value) {
                   // TODO: Handle the value change
                 },
-                activeColor: currentTheme.primaryColor,
+                activeColor: Colors.blue[900],
               ),
             ),
             Divider(),
             ListTile(
               title: Text(
                 'Notifications',
-                style: GoogleFonts.fredoka(color: currentTheme.textTheme.displayLarge?.color),
+                style: GoogleFonts.fredoka(color: Colors.blue[900]),
               ),
               trailing: Switch(
                 value: true, // TODO: Bind this to your actual settings variable
                 onChanged: (bool value) {
                   // TODO: Handle the value change
                 },
-                activeColor: currentTheme.primaryColor,
+                activeColor: Colors.blue[900],
               ),
             ),
             Divider(),
             ListTile(
               title: Text(
                 'Change Theme',
-                style: GoogleFonts.fredoka(color: currentTheme.textTheme.displayLarge?.color),
+                style: GoogleFonts.fredoka(color: Colors.blue[900]),
               ),
-              trailing: Icon(Icons.color_lens, color: currentTheme.primaryColor),
+              trailing: Icon(Icons.color_lens, color: Colors.blue[900]),
               onTap: () {
                 _showThemeBottomSheet(context);
               },
@@ -102,7 +101,7 @@ class SettingsScreen extends StatelessWidget {
               },
               child: Text('Reset Data', style: GoogleFonts.fredoka(color: Colors.white)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red[500], // Red, as resetting can be a critical action.
+                primary: Colors.red[500], // Red, as resetting can be a critical action.
                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 minimumSize: Size(MediaQuery.of(context).size.width * 0.4, 50), // Button size is 40% of screen width and has a fixed height of 50.
               ),
