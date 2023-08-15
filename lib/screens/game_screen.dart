@@ -1,11 +1,8 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:device_info_plus/device_info_plus.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -13,11 +10,11 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:technomaths/screens/wall_of_fame.dart';
 import 'package:technomaths/widgets/animated_buttons.dart';
-import 'package:technomaths/enums/game_mode.dart';
-import 'package:technomaths/enums/game_speed.dart';
-
+import 'package:technomaths/config/game_mode.dart';
+import 'package:technomaths/config/game_speed.dart';
+import '../config/ad_config.dart';
 import '../database/database_helper.dart';
-import '../utils/device_uuid_util.dart';
+import '../utils/commonFunctions.dart';
 
 
 class GameScreen extends StatefulWidget {
@@ -52,18 +49,8 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   int _numRewardedLoadAttempts = 0;
   static const int maxFailedLoadAttempts = 3;
   Color _backgroundColor = Colors.transparent;
-
-  static final AdRequest request = AdRequest(
-    keywords: <String>['foo', 'bar'],
-    contentUrl: 'http://foo.com/bar.html',
-    nonPersonalizedAds: true,
-  );
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
-
-
-
   Key key = UniqueKey();
-  // Check if the device can vibrate
   bool _canVibrate = false;
   late AnimationController _scoreController;
   late Animation<double> _scoreAnimation;
@@ -78,39 +65,28 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     _loadHighestScore();
     _createRewardedAd();
     generateQuestion();
-    _checkVibrationSupport();
     _scoreController = AnimationController(
         duration: Duration(milliseconds: 1000), vsync: this);
     _scoreAnimation = Tween<double>(begin: 0, end: 1).animate(_scoreController);
     startTotalGameTimer();
     dataSaved = 0;
     canRevive = true;
+    initAsync();
   }
 
-  Future<String?> getUniqueDeviceID() async {
-    final DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
-    if (kIsWeb) {
-      return null;
-    } else {
-      switch (defaultTargetPlatform) {
-        case TargetPlatform.android:
-          AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
-          return '${androidInfo.brand}-${androidInfo.model}-${androidInfo.product}-${androidInfo.fingerprint}';
-        case TargetPlatform.iOS:
-          IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
-          return iosInfo.identifierForVendor;
-      // Add more platforms if needed.
-        default:
-          return null;
-      }
-    }
+  Future<void> initAsync() async {
+    _canVibrate = await commonFunctions.checkVibrationSupport();
   }
 
+  //ads related
+  static const AdRequest request = AdRequest(
+    keywords: <String>['foo', 'bar'],
+    contentUrl: 'http://foo.com/bar.html',
+    nonPersonalizedAds: true,
+  );
   void _createRewardedAd() {
     RewardedAd.load(
-        adUnitId: Platform.isAndroid
-            ? 'ca-app-pub-6109906096472807/2881924681'
-            : 'ca-app-pub-6109906096472807/2881924681',
+        adUnitId: commonFunctions.getAdUnitId(AdType.rewarded),
         request: request,
         rewardedAdLoadCallback: RewardedAdLoadCallback(
           onAdLoaded: (RewardedAd ad) {
@@ -126,7 +102,6 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
           },
         ));
   }
-
   void _showRewardedAd() {
     if (_rewardedAd == null) {
       return;
@@ -158,29 +133,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     _rewardedAd = null;
   }
 
-
-  Future<void> _loadHighestScore() async {
-    final score = await DatabaseHelper.instance.queryHighestScore(widget.gameMode.toString());
-    setState(() {
-      highestScore = score;
-    });
-  }
-
-  String getReadableTime(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
-    String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
-    return "${twoDigitMinutes}:${twoDigitSeconds}";
-  }
-
-  // Asynchronous method to check vibration support
-  Future<void> _checkVibrationSupport() async {
-    bool vibrationSupported = await Vibrate.canVibrate;
-    setState(() {
-      _canVibrate = vibrationSupported;
-    });
-  }
-
+  // game logic and functions
   @override
   void dispose() {
     timer?.cancel();
@@ -188,20 +141,6 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     _scoreController.dispose();
     super.dispose();
   }
-
-  void startTotalGameTimer() {
-    totalGameTimer = Timer.periodic(Duration(seconds: 1), (timer) {
-      setState(() {
-        totalTime = totalTime + Duration(seconds: 1);
-      });
-    });
-  }
-
-  void stopTotalGameTimer() {
-    totalGameTimer?.cancel();
-  }
-
-
   void increaseDifficulty() {
     // Increase maxNumber every 5 levels
     if (score <= 10) {
@@ -268,6 +207,18 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       }
     }
   }
+  String formatDecimal(String value) {
+    if (value.contains('.')) {
+      return double.parse(value).toStringAsFixed(2);
+    }
+    return value;  // return as-is if no decimal point
+  }
+  String getReadableTime(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
+    String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
+    return "$twoDigitMinutes:$twoDigitSeconds";
+  }
 
   void generateQuestion() {
     //cancel the old timer if its still running
@@ -278,7 +229,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       return;
     }
 
-    var rng = new Random();
+    var rng = Random();
     int number1, number2;
     String operator;
 
@@ -288,23 +239,23 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     List<String> operators = ['+', '-', '×', '÷'];
 
     switch(widget.gameMode) {
-      case GameMode.Addition:
+      case GameMode.addition:
         operator = '+';
         correctAnswer = number1 + number2;
         break;
-      case GameMode.Subtraction:
+      case GameMode.subtraction:
         operator = '-';
         correctAnswer = number1 - number2;
         break;
-      case GameMode.Multiplication:
+      case GameMode.multiplication:
         operator = '×';
         correctAnswer = number1 * number2;
         break;
-      case GameMode.Division:
+      case GameMode.division:
         operator = '÷';
         correctAnswer = (number1 / number2);  // If it's division, take the floor (integer part) of the division
         break;
-      case GameMode.All: // In case of 'All', pick a random operator
+      case GameMode.all: // In case of 'All', pick a random operator
         operator = operators[rng.nextInt(operators.length)];
         correctAnswer = calculateAnswer(operator, number1, number2);  // Define a function to calculate the answer based on the operator
         break;
@@ -319,8 +270,6 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     // After generating a new question, start the timer again
     startTimer();
   }
-
-  // A function to calculate the correct answer
   dynamic calculateAnswer(String operator, int number1, int number2) {
     switch(operator) {
       case '+':
@@ -336,10 +285,8 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
         return 0;
     }
   }
-
-  // A function to generate four options
   List<String> generateOptions(dynamic correctAnswer) {
-    var rng = new Random();
+    var rng = Random();
     Set<String> optionsSet = {};
     optionsSet.add(correctAnswer.toString());  // Add correct answer to options
 
@@ -394,8 +341,6 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     optionsList.shuffle();
     return optionsList;
   }
-
-  // Add a checkAnswer function to update the score
   void checkAnswer(String selectedOption, dynamic correctAnswer) {
     // Cancel the timer regardless of the correctness of the answer
     timer?.cancel();
@@ -443,6 +388,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     }
   }
 
+  //time related
   void updateRemainingTime(){
     switch(widget.gameSpeed) {
       case GameSpeed.fifteen:
@@ -495,14 +441,13 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
         break;
     }
   }
-
   void startTimer() {
 
     updateRemainingTime();
 
     key = UniqueKey(); // Generate a new Key
 
-    const oneSec = const Duration(seconds: 1);
+    const oneSec = Duration(seconds: 1);
     timer = Timer.periodic(
       oneSec,
           (Timer timer) => setState(
@@ -517,7 +462,6 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       ),
     );
   }
-
   void endOfTimer() {
     Vibrate.feedback(FeedbackType.error);
     if(lives > 1) {
@@ -536,7 +480,18 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       timer?.cancel();
     }
   }
+  void stopTotalGameTimer() {
+    totalGameTimer?.cancel();
+  }
+  void startTotalGameTimer() {
+    totalGameTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+      setState(() {
+        totalTime = totalTime + Duration(seconds: 1);
+      });
+    });
+  }
 
+  //db functions
   void _saveGameData() async {
     if (_nameController.text.trim().isNotEmpty && dataSaved == 0) {
 
@@ -548,21 +503,21 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
         DatabaseHelper.columnTimeElapsed: getReadableTime(totalTime)
       };
 
-      final id = await DatabaseHelper.instance.insert(row);
+      await DatabaseHelper.instance.insert(row);
 
       var connectivityResult = await (Connectivity().checkConnectivity());
 
       if (connectivityResult == ConnectivityResult.none) {
         // No internet connection
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Cannot connect to server'))
+            const SnackBar(content: Text('Cannot connect to server'))
         );
         return;
       } else {
         // Firebase data saving logic
         CollectionReference games = FirebaseFirestore.instance.collection('endlessModeGameData');
-        String? deviceInfo = await getUniqueDeviceID();
-        String deviceUID = await DeviceUUIDUtil.getDeviceUUID();
+        String? deviceInfo = await commonFunctions.getDeviceInfo();
+        String deviceUID = await commonFunctions.getDeviceUUID();
 
         Map<String, dynamic> firebaseRow = {
           'datetime': DateTime.now().toIso8601String(),  // Save the current date and time as a string in ISO format
@@ -582,7 +537,6 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
 
     canRevive = false;
   }
-
   _loadPlayerName() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? playerName = prefs.getString('playerName');
@@ -590,19 +544,16 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       _nameController.text = playerName ?? '';
     });
   }
-
   _savePlayerName(String name) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setString('playerName', name);
   }
-
-  String formatDecimal(String value) {
-    if (value.contains('.')) {
-      return double.parse(value).toStringAsFixed(2);
-    }
-    return value;  // return as-is if no decimal point
+  Future<void> _loadHighestScore() async {
+    final score = await DatabaseHelper.instance.queryHighestScore(widget.gameMode.toString());
+    setState(() {
+      highestScore = score;
+    });
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -612,12 +563,12 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.purple, size: 30),
+          icon: const Icon(Icons.arrow_back, color: Colors.purple, size: 30),
           onPressed: () => Navigator.pop(context),
         ),
       ) : null,
       body: AnimatedContainer(
-        duration: Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 300),
         color: _backgroundColor,
         child: Stack(
           children: [
@@ -646,10 +597,10 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                                 ),
                               ),
                               // Spacer for a gap between text and progress bar
-                              SizedBox(height: 30),
+                              const SizedBox(height: 30),
                               // Progress bar
                               Container(
-                                padding: EdgeInsets.symmetric(horizontal: 30), // Padding for wider bar
+                                padding: const EdgeInsets.symmetric(horizontal: 30), // Padding for wider bar
                                 height: 10, // Height for progress bar
                                 child: TweenAnimationBuilder(
                                   key: key,
@@ -668,12 +619,12 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                             ],
                           ),
 
-                          SizedBox(height: 30),
+                          const SizedBox(height: 30),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: List.generate(lives, (index) => Icon(Icons.favorite, color: Colors.red, size: 40)).toList(),
                           ),
-                          SizedBox(height: 30),
+                          const SizedBox(height: 30),
                           Center(
                             child: Text(
                               'Score: $score',

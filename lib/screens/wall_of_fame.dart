@@ -1,15 +1,15 @@
 import 'dart:math';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:technomaths/enums/game_mode.dart';
+import 'package:technomaths/config/game_mode.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 
 import '../database/database_helper.dart';
-import '../utils/device_uuid_util.dart';
+import '../config/ad_config.dart';
+import '../utils/commonFunctions.dart';
 
 class WallOfFameScreen extends StatefulWidget {
   GameMode gameMode;
@@ -36,7 +36,7 @@ class _WallOfFameScreenState extends State<WallOfFameScreen> {
 
 
   int rowsPerPage = 10; // Number of rows to show per page
-  GameMode selectedMode = GameMode.Addition;
+  GameMode selectedMode = GameMode.addition;
 
   // Load scores from the database upon initialization
   @override
@@ -60,9 +60,7 @@ class _WallOfFameScreenState extends State<WallOfFameScreen> {
 
   void _createInterstitialAd() {
     InterstitialAd.load(
-        adUnitId: Platform.isAndroid
-            ? 'ca-app-pub-6109906096472807/4941429048'
-            : 'ca-app-pub-6109906096472807/4941429048',
+        adUnitId: commonFunctions.getAdUnitId(AdType.interstitial),
         request: AdRequest(),
         adLoadCallback: InterstitialAdLoadCallback(
           onAdLoaded: (InterstitialAd ad) {
@@ -79,7 +77,6 @@ class _WallOfFameScreenState extends State<WallOfFameScreen> {
           },
         ));
   }
-
   void showAd(){
     var rng = new Random();
     if (rng.nextInt(100) < 30) {
@@ -100,9 +97,8 @@ class _WallOfFameScreenState extends State<WallOfFameScreen> {
       _interstitialAd!.show();
     }
   }
-
   Future<void> _fetchPersonalScores() async {
-    String deviceUUID = await DeviceUUIDUtil.getDeviceUUID();
+    String deviceUUID = await commonFunctions.getDeviceUUID();
 
     // Filter scores based on deviceUUID and sort them
     List<Map<String, dynamic>> filteredScores = allTimeScores
@@ -118,11 +114,9 @@ class _WallOfFameScreenState extends State<WallOfFameScreen> {
     });
   }
 
-
-
   int? _getPersonalBestRank(List<Map<String, dynamic>> scores) {
-    if (personalScores != null && personalScores!.isNotEmpty) {
-      var personalBest = personalScores![0]['score'];
+    if (personalScores.isNotEmpty) {
+      var personalBest = personalScores[0]['score'];
       for (int i = 0; i < scores.length; i++) {
         if (scores[i]['score'] <= personalBest) {
           return i + 1;
@@ -155,7 +149,6 @@ class _WallOfFameScreenState extends State<WallOfFameScreen> {
 
     return fetchedScores;
   }
-
   Future<List<Map<String, dynamic>>> _loadAllTimeScores() async {
     QuerySnapshot snapshot = await FirebaseFirestore.instance
         .collection('endlessModeGameData')
@@ -266,7 +259,7 @@ class _WallOfFameScreenState extends State<WallOfFameScreen> {
         ),
         child: Column(
           children: [
-            if (personalBestRank != null && personalScores != null && personalScores!.isNotEmpty && tabType != 'local')
+            if (personalBestRank != null && personalScores.isNotEmpty && tabType != 'local')
               Container(
                 margin: EdgeInsets.only(bottom: 16.0),
                 padding: EdgeInsets.all(8.0),
@@ -277,7 +270,7 @@ class _WallOfFameScreenState extends State<WallOfFameScreen> {
                 child: Row(
                   children: [
                     Text(
-                      "Your Best Score: ${personalScores![0]['score']}",
+                      "Your Best Score: ${personalScores[0]['score']}",
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     Spacer(),
@@ -370,15 +363,15 @@ class _WallOfFameScreenState extends State<WallOfFameScreen> {
 
 IconData _getIconForMode(GameMode mode) {
   switch (mode) {
-    case GameMode.Addition:
+    case GameMode.addition:
       return Icons.add_circle_outline;
-    case GameMode.Subtraction:
+    case GameMode.subtraction:
       return Icons.remove_circle_outline;
-    case GameMode.Multiplication:
+    case GameMode.multiplication:
       return Icons.close;  // using the 'close' icon which looks like a multiplication sign (x)
-    case GameMode.Division:
+    case GameMode.division:
       return Icons.horizontal_split;  // using the 'horizontal_split' which can represent division
-    case GameMode.All:
+    case GameMode.all:
       return Icons.all_inclusive;  // a general icon to represent 'all'
     default:
       return Icons.help_outline;
