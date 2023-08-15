@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:technomaths/enums/game_mode.dart';
-import 'package:technomaths/screens/settings_page.dart';
 import 'package:technomaths/screens/wall_of_fame.dart';
 import 'package:technomaths/widgets/animated_buttons.dart';
 import 'package:flutter/services.dart'; // Required for SystemNavigator
@@ -63,13 +62,6 @@ class HomeScreen extends StatelessWidget {
               }),
               AnimatedButton('Rate the Game', onPressed: () {
                 // Code to rate the game
-              }),
-              AnimatedButton('Settings', onPressed: () {
-                //Settings screen
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => SettingsScreen()),
-                );
               }),
               AnimatedButton('Quit', onPressed: () {
                 SystemNavigator.pop();
