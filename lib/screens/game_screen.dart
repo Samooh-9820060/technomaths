@@ -51,8 +51,6 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   RewardedAd? _rewardedAd;
   int _numRewardedLoadAttempts = 0;
   static const int maxFailedLoadAttempts = 3;
-  Color _backgroundColor = Colors.transparent; // Initially, it's transparent.
-
 
   static final AdRequest request = AdRequest(
     keywords: <String>['foo', 'bar'],
@@ -423,13 +421,6 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     } else {
       setState(() {
         lives--;
-        _backgroundColor = Colors.red; // Set the color to red on wrong answer
-      });
-
-      Future.delayed(const Duration(milliseconds: 300), () {
-        setState(() {
-          _backgroundColor = Colors.transparent; // Reset the color after a brief delay
-        });
       });
 
       // If game isn't over, generate a new question
@@ -616,274 +607,245 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
           onPressed: () => Navigator.pop(context),
         ),
       ) : null,
-      body: AnimatedContainer(
-        duration: Duration(milliseconds: 300),
-        color: _backgroundColor,
-        child: Stack(
-          children: [
-            // Background Gradient
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.blueAccent.withOpacity(0.8),
-                    Colors.deepPurple.withOpacity(0.2)
-                  ],
-                ),
-              ),
-            ),
-            // Main game screen
-            Container(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Expanded(
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          Column(
-                            children: [
-                              // Timer Text
-                              // Total time elapsed display
-                              Center(
-                                child: Text(
-                                  'Time: ${getReadableTime(totalTime)}',
-                                  style: GoogleFonts.fredoka(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.white, // Lighter shade of deepPurple for contrast and readability.
-                                  ),
-                                ),
-                              ),
-                              // Spacer for a gap between text and progress bar
-                              SizedBox(height: 30),
-                              // Progress bar
-                              Container(
-                                padding: EdgeInsets.symmetric(horizontal: 30),
-                                height: 10,
-                                child: TweenAnimationBuilder(
-                                  key: key,
-                                  tween: Tween(begin: 1.0, end: 0.0),
-                                  duration: Duration(seconds: remainingTime),
-                                  builder: (context, value, child) {
-                                    return LinearProgressIndicator(
-                                      value: value,
-                                      minHeight: 30,
-                                      backgroundColor: Colors.white, // Making it slightly transparent.
-                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurple),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          SizedBox(height: 30),
-                          //hearts
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: List.generate(
-                              lives,
-                                  (index) => Icon(Icons.favorite, size: 40, color: Colors.red),
-                            ).toList(),
-                          ),
-                          SizedBox(height: 30),
-
-                          //score
-                          Center(
-                            child: Text(
-                              'Score: $score',
-                              style: GoogleFonts.fredoka(
-                                color: Colors.white, // Lighter shade of blueAccent
-                                fontSize: 32,
-                              ),
-                            ),
-                          ),
-                          // Animated score pop-up
-                          FadeTransition(
-                            opacity: _scoreAnimation,
-                            child: Text(
-                              '+1',
-                              style: GoogleFonts.fredoka(
-                                  color: Theme.of(context).colorScheme.primary,
-                                  fontSize: 32
-                              ),
-                            ),
-                          ),
-
-
-                          SizedBox(height: 30),
-                          //question
-                          Text(
-                            question.contains('÷') ? formatDecimal(question) : question,
-                            style: GoogleFonts.fredoka(
-                              fontSize: 50,
-                              color: Colors.white,
-                            ),
-                          ),
-
-                          SizedBox(height: 30),
-                          GridView.count(
-                            shrinkWrap: true,
-                            crossAxisCount: 2,
-                            childAspectRatio: 2,
-                            padding: const EdgeInsets.all(20),
-                            mainAxisSpacing: 20,
-                            crossAxisSpacing: 20,
-                            children: <Widget>[
-                              AnimatedButton(formatDecimal(options[0]), onPressed: () => checkAnswer(options[0], correctAnswer)),
-                              AnimatedButton(formatDecimal(options[1]), onPressed: () => checkAnswer(options[1], correctAnswer)),
-                              AnimatedButton(formatDecimal(options[2]), onPressed: () => checkAnswer(options[2], correctAnswer)),
-                              AnimatedButton(formatDecimal(options[3]), onPressed: () => checkAnswer(options[3], correctAnswer)),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+      body: Stack(
+        children: [
+          // Background Gradient
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.blueAccent.withOpacity(0.8),
+                  Colors.deepPurple.withOpacity(0.2)
                 ],
               ),
             ),
-            // Game Over overlay
-            if (lives == 0) ...[
-              BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                child: Container(
-                  color: Colors.black.withOpacity(0.4),
-                ),
-              ),
-              Center(
-                child: Container(
-                  width: MediaQuery.of(context).size.width * 0.8, // 80% of screen width
-                  child: AlertDialog(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    backgroundColor: Colors.white70, // Added a bit of transparency to keep the theme feel
-                    title: Text('Game Over', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: Colors.red, fontSize: 32)),
-                    content: SingleChildScrollView(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: <Widget>[
-                          Text('Your Name', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: Colors.blueAccent)),
-                          TextField(
-                            controller: _nameController,
-                            textAlign: TextAlign.center,
-                            onChanged: (value) {
-                              _savePlayerName(value);
-                            },
-                            decoration: InputDecoration(  // Added some decoration to the TextField
-                              hintText: 'Enter your name',
-                              hintStyle: GoogleFonts.fredoka(color: Colors.blueAccent.withOpacity(0.7)),
-                              enabledBorder: UnderlineInputBorder(
-                                borderSide: BorderSide(color: Colors.blueAccent),
-                              ),
-                              focusedBorder: UnderlineInputBorder(
-                                borderSide: BorderSide(color: Colors.blueAccent),
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 20),
-                          Text('Your Score: $score', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: Colors.blueAccent, fontSize: 24)),
-                          SizedBox(height: 20),
-                          Text('Best Score: $highestScore', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: Colors.blueAccent, fontSize: 24)),
-                          SizedBox(height: 30),
-                          if (canRevive && _rewardedAd != null) ...[
-                            ElevatedButton(
-                              onPressed: () {
-                                _showRewardedAd();
-                              },
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.play_arrow, color: Colors.white),
-                                  SizedBox(width: 10),
-                                  Text('Revive', style: GoogleFonts.fredoka(color: Colors.white, fontSize: 18)),
-                                ],
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                primary: Colors.green[400],  // Green for the revive action
-                                onPrimary: Colors.white,
-                                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                                minimumSize: Size(MediaQuery.of(context).size.width * 0.7, 50),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30),
+          ),
+          // Main game screen
+          Container(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Column(
+                          children: [
+                            // Timer Text
+                            // Total time elapsed display
+                            Center(
+                              child: Text(
+                                'Time: ${getReadableTime(totalTime)}',
+                                style: GoogleFonts.fredoka(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.white, // Lighter shade of deepPurple for contrast and readability.
                                 ),
                               ),
                             ),
-
-                            SizedBox(height: 20),
+                            // Spacer for a gap between text and progress bar
+                            SizedBox(height: 30),
+                            // Progress bar
+                            Container(
+                              padding: EdgeInsets.symmetric(horizontal: 30),
+                              height: 10,
+                              child: TweenAnimationBuilder(
+                                key: key,
+                                tween: Tween(begin: 1.0, end: 0.0),
+                                duration: Duration(seconds: remainingTime),
+                                builder: (context, value, child) {
+                                  return LinearProgressIndicator(
+                                    value: value,
+                                    minHeight: 30,
+                                    backgroundColor: Colors.white, // Making it slightly transparent.
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurple),
+                                  );
+                                },
+                              ),
+                            ),
                           ],
+                        ),
+
+                        SizedBox(height: 30),
+                        //hearts
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(
+                            lives,
+                                (index) => Icon(Icons.favorite, size: 40, color: Colors.red),
+                          ).toList(),
+                        ),
+                        SizedBox(height: 30),
+
+                        //score
+                        Center(
+                          child: Text(
+                            'Score: $score',
+                            style: GoogleFonts.fredoka(
+                              color: Colors.white, // Lighter shade of blueAccent
+                              fontSize: 32,
+                            ),
+                          ),
+                        ),
+                        // Animated score pop-up
+                        FadeTransition(
+                          opacity: _scoreAnimation,
+                          child: Text(
+                            '+1',
+                            style: GoogleFonts.fredoka(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontSize: 32
+                            ),
+                          ),
+                        ),
+
+
+                        SizedBox(height: 30),
+                        //question
+                        Text(
+                          question.contains('÷') ? formatDecimal(question) : question,
+                          style: GoogleFonts.fredoka(
+                            fontSize: 50,
+                            color: Colors.white,
+                          ),
+                        ),
+
+                        SizedBox(height: 30),
+                        GridView.count(
+                          shrinkWrap: true,
+                          crossAxisCount: 2,
+                          childAspectRatio: 2,
+                          padding: const EdgeInsets.all(20),
+                          mainAxisSpacing: 20,
+                          crossAxisSpacing: 20,
+                          children: <Widget>[
+                            AnimatedButton(formatDecimal(options[0]), onPressed: () => checkAnswer(options[0], correctAnswer)),
+                            AnimatedButton(formatDecimal(options[1]), onPressed: () => checkAnswer(options[1], correctAnswer)),
+                            AnimatedButton(formatDecimal(options[2]), onPressed: () => checkAnswer(options[2], correctAnswer)),
+                            AnimatedButton(formatDecimal(options[3]), onPressed: () => checkAnswer(options[3], correctAnswer)),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Game Over overlay
+          if (lives == 0) ...[
+            BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+              child: Container(
+                color: Colors.black.withOpacity(0.4),
+              ),
+            ),
+            Center(
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.8, // 80% of screen width
+                child: AlertDialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  backgroundColor: Colors.white,
+                  title: Text('Game Over', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: Colors.red, fontSize: 32)),
+                  content: SingleChildScrollView(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        Text('Your Name', textAlign: TextAlign.center,),
+                        TextField(
+                          controller: _nameController,
+                          textAlign: TextAlign.center,
+                          onChanged: (value) {
+                            _savePlayerName(value);
+                          },
+                        ),  // User can enter their name here
+                        SizedBox(height: 20),
+                        Text('Your Score: $score', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: Colors.purple, fontSize: 24)),
+                        SizedBox(height: 20),
+                        Text('Best Score: $highestScore', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: Colors.purple, fontSize: 24)),
+                        SizedBox(height: 30),
+                        if (canRevive && _rewardedAd != null) ...[
                           ElevatedButton(
                             onPressed: () {
-                              _saveGameData();
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => GameScreen(
-                                    gameMode: widget.gameMode,
-                                    gameSpeed: GameSpeed.fifteen,
-                                  ),
-                                ),
-                              );
+                              _showRewardedAd();
                             },
-                            child: Text('Retry', style: GoogleFonts.fredoka(color: Colors.white)),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.play_arrow, color: Colors.white),  // Representing a video play button
+                                SizedBox(width: 10),
+                                Text('Revive', style: GoogleFonts.fredoka(color: Colors.white, fontSize: 18)),
+                              ],
+                            ),
                             style: ElevatedButton.styleFrom(
-                              primary: Colors.blueAccent,  // changed to blueAccent
+                              primary: Colors.green[500],
                               onPrimary: Colors.white,
-                              minimumSize: Size(MediaQuery.of(context).size.width * 0.4, 50), // Button size is 40% of screen width and has a fixed height of 50.
+                              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                              minimumSize: Size(MediaQuery.of(context).size.width * 0.7, 50),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(15),
+                                borderRadius: BorderRadius.circular(30),
                               ),
                             ),
                           ),
-                          SizedBox(height: 15),
-
-                          ElevatedButton(
-                            onPressed: () {
-                              _saveGameData();
-                              Navigator.of(context).push(MaterialPageRoute(builder: (context) => WallOfFameScreen(
-                                gameMode: widget.gameMode,
-                              )));
-                            },
-                            child: Text('Wall of Fame', style: GoogleFonts.fredoka(color: Colors.white)),
-                            style: ElevatedButton.styleFrom(
-                              primary: Colors.blueAccent[700],  // changed to a darker shade of blue
-                              onPrimary: Colors.white,
-                              minimumSize: Size(MediaQuery.of(context).size.width * 0.4, 50),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(15),
-                              ),
-                            ),
-                          ),
-
-                          SizedBox(height: 15),
-
-                          ElevatedButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: Text('Back', style: GoogleFonts.fredoka(color: Colors.white)),
-                            style: ElevatedButton.styleFrom(
-                              primary: Colors.blueGrey,  // A greyish-blue color, to give it a "back" or secondary feel
-                              onPrimary: Colors.white,
-                              minimumSize: Size(MediaQuery.of(context).size.width * 0.4, 50),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(15),
-                              ),
-                            ),
-                          ),
+                          SizedBox(height: 20),
                         ],
-                      ),
+                        ElevatedButton(
+                          onPressed: () {
+                            _saveGameData();
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => GameScreen(
+                                  gameMode: widget.gameMode,
+                                  gameSpeed: GameSpeed.fifteen,
+                                ),
+                              ),
+                            );
+                          },
+                          child: Text('Retry', style: GoogleFonts.fredoka(color: Colors.white)),
+                          style: ElevatedButton.styleFrom(
+                            primary: Colors.purple, // This replaces the 'color' property
+                            minimumSize: Size(MediaQuery.of(context).size.width * 0.4, 50), // Button size is 40% of screen width and has a fixed height of 50.
+                          ),
+                        ),
+                        SizedBox(height: 15),
+                        ElevatedButton(
+                          onPressed: () {
+                            _saveGameData();
+                            Navigator.of(context).push(MaterialPageRoute(builder: (context) => WallOfFameScreen(
+                              gameMode: widget.gameMode,
+                            )));
+                          },  // Add functionality to go to Wall of Fame
+                          child: Text('Wall of Fame', style: GoogleFonts.fredoka(color: Colors.white)),
+                          style: ElevatedButton.styleFrom(
+                            primary: Colors.purple, // This replaces the 'color' property
+                            minimumSize: Size(MediaQuery.of(context).size.width * 0.4, 50), // Button size is 40% of screen width and has a fixed height of 50.
+                          ),
+                        ),
+
+                        SizedBox(height: 15),
+                        ElevatedButton(
+                          onPressed: () => Navigator.pop(context), // Add functionality to go to Rate screen
+                          child: Text('Back', style: GoogleFonts.fredoka(color: Colors.white)),
+                          style: ElevatedButton.styleFrom(
+                            primary: Colors.purple, // This replaces the 'color' property
+                            minimumSize: Size(MediaQuery.of(context).size.width * 0.4, 50), // Button size is 40% of screen width and has a fixed height of 50.
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
-            ]
-          ],
-        ),
+            ),
+          ]
+        ],
       ),
     );
   }
