@@ -46,7 +46,7 @@ class HomeScreen extends StatelessWidget {
                 await performVibration();
                 Navigator.of(context).push(MaterialPageRoute(
                     builder: (context) => WallOfFameScreen(
-                      gameMode: GameMode.addition,
+                      gameMode: GameMode.Addition,
                     )));
               }),
               AnimatedButton('Settings', onPressed: () async {

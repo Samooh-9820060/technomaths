@@ -1,7 +1,7 @@
 enum GameMode {
-  addition,
-  subtraction,
-  multiplication,
-  division,
-  all
+  Addition,
+  Subtraction,
+  Multiplication,
+  Division,
+  Mix
 }

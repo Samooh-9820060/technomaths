@@ -45,7 +45,7 @@ class EndlessModeScreen extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (context) => GameScreen(
-                      gameMode: GameMode.addition,
+                      gameMode: GameMode.Addition,
                       gameSpeed: GameSpeed.fifteen,
                   ),
                 ),
@@ -57,7 +57,7 @@ class EndlessModeScreen extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (context) => GameScreen(
-                      gameMode: GameMode.subtraction,
+                      gameMode: GameMode.Subtraction,
                       gameSpeed: GameSpeed.fifteen,
                   ),
                 ),
@@ -69,7 +69,7 @@ class EndlessModeScreen extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (context) => GameScreen(
-                      gameMode: GameMode.multiplication,
+                      gameMode: GameMode.Multiplication,
                       gameSpeed: GameSpeed.fifteen,
                   ),
                 ),
@@ -81,7 +81,7 @@ class EndlessModeScreen extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (context) => GameScreen(
-                      gameMode: GameMode.division,
+                      gameMode: GameMode.Division,
                       gameSpeed: GameSpeed.fifteen,
                   ),
                 ),
@@ -93,7 +93,7 @@ class EndlessModeScreen extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (context) => GameScreen(
-                      gameMode: GameMode.all,
+                      gameMode: GameMode.Mix,
                       gameSpeed: GameSpeed.fifteen,
                   ),
                 ),
