@@ -58,6 +58,16 @@ class DatabaseHelper {
     return await db.query(table);
   }
 
+  Future<List<Map<String, dynamic>>> queryRowsByGameMode(String selectedMode) async {
+    Database db = await instance.database;
+    return await db.query(
+      table,
+      where: 'gameMode = ?',
+      whereArgs: [selectedMode],
+    );
+  }
+
+
   Future<int?> queryHighestScore(String gameMode) async {
     Database db = await instance.database;
 

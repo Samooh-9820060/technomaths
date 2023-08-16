@@ -239,23 +239,23 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     List<String> operators = ['+', '-', '×', '÷'];
 
     switch(widget.gameMode) {
-      case GameMode.addition:
+      case GameMode.Addition:
         operator = '+';
         correctAnswer = number1 + number2;
         break;
-      case GameMode.subtraction:
+      case GameMode.Subtraction:
         operator = '-';
         correctAnswer = number1 - number2;
         break;
-      case GameMode.multiplication:
+      case GameMode.Multiplication:
         operator = '×';
         correctAnswer = number1 * number2;
         break;
-      case GameMode.division:
+      case GameMode.Division:
         operator = '÷';
         correctAnswer = (number1 / number2);  // If it's division, take the floor (integer part) of the division
         break;
-      case GameMode.all: // In case of 'All', pick a random operator
+      case GameMode.Mix: // In case of 'All', pick a random operator
         operator = operators[rng.nextInt(operators.length)];
         correctAnswer = calculateAnswer(operator, number1, number2);  // Define a function to calculate the answer based on the operator
         break;
