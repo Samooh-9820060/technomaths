@@ -494,7 +494,6 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   //db functions
   void _saveGameData() async {
     if (_nameController.text.trim().isNotEmpty && dataSaved == 0) {
-
       // Local data saving logic
       Map<String, dynamic> row = {
         DatabaseHelper.columnName: _nameController.text,
@@ -534,7 +533,6 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
 
       dataSaved = 1;
     }
-
     canRevive = false;
   }
   _loadPlayerName() async {

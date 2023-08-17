@@ -64,6 +64,9 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
       setState(() {
         initialRow = 0; // reset the initial row index
       });
+      //reset the scores
+      bestScoreRank = 0;
+      bestScore = 0;
       previousMode = selectedMode;
       switch (_tabController.index) {
         case 0: // Local
@@ -108,7 +111,6 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
           },
         ));
   }
-
   void showAd() {
     var rng = new Random();
     if (rng.nextInt(100) < 30) {
@@ -149,7 +151,6 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
       scores = rows;
     });
   }
-
   Future<List<Map<String, dynamic>>> _load24hScores() async {
     final endTime = DateTime.now().add(Duration(minutes: 1));
     final startTime = endTime.subtract(Duration(hours: 24));
@@ -199,7 +200,6 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
     totalCount = fetchedScores.length;
     return fetchedScores;
   }
-
   Future<List<Map<String, dynamic>>> _loadAllTimeScores() async {
     //get total count and update it
     AggregateQuerySnapshot countSnapshot = await FirebaseFirestore.instance
@@ -227,7 +227,6 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
 
     return fetchedScores;
   }
-
   Future<void> _loadNextPage() async {
     if (lastDocumentAllTime == null) {
       // We're already at the beginning, so just return

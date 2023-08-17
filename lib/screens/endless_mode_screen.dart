@@ -87,7 +87,7 @@ class EndlessModeScreen extends StatelessWidget {
                 ),
               );
             }),
-            AnimatedButton('All', onPressed: () async {
+            AnimatedButton('Mix', onPressed: () async {
               await performVibration();
               Navigator.push(
                 context,
