@@ -113,6 +113,11 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       onAdDismissedFullScreenContent: (RewardedAd ad) {
         ad.dispose();
         _createRewardedAd();
+
+        // This is where the ad has been closed.
+        if (lives > 0) {
+          startTimer();
+        }
       },
       onAdFailedToShowFullScreenContent: (RewardedAd ad, AdError error) {
         ad.dispose();
@@ -123,12 +128,10 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     _rewardedAd!.setImmersiveMode(true);
     _rewardedAd!.show(
         onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
-
           //ad viewed
           setState(() {
             lives += 1;   // Award an extra life
             canRevive = false;  // Ensure the user can't revive again until they lose again
-            startTimer(); // restart the timer or continue from where it was paused
           });
         });
     _rewardedAd = null;
