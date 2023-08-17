@@ -1,3 +1,4 @@
+import 'dart:ffi';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -57,7 +58,6 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
     _tabController.addListener(_handleTabSelection);
     _loadScores();
   }
-
   void _handleTabSelection() {
     var previousMode;
     if (_tabController.indexIsChanging || previousMode != selectedMode) {
@@ -90,6 +90,21 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
           break;
       }
     }
+  }
+  int convertTimeStringToSeconds(String time) {
+    List<String> parts = time.split(':');
+    if (parts.length != 2) return 0;
+
+    int minutes = int.tryParse(parts[0]) ?? 0;
+    int seconds = int.tryParse(parts[1]) ?? 0;
+
+    return minutes * 60 + seconds;
+  }
+  String convertSecondsToTimeString(int totalSeconds) {
+    int minutes = totalSeconds ~/ 60;
+    int seconds = totalSeconds % 60;
+
+    return "${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}";
   }
 
   void _createInterstitialAd() {
@@ -225,8 +240,73 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
     List<Map<String, dynamic>> fetchedScores =
         snapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
 
+    //get players highest score
+    String deviceUUID = await commonFunctions.getDeviceUUID();
+    QuerySnapshot queryResult = await FirebaseFirestore.instance
+        .collection('endlessModeGameData')
+        .where('gameMode', isEqualTo: selectedMode.toString())
+        .where('deviceUID', isEqualTo: deviceUUID)
+        .orderBy('score', descending: true)
+        .limit(1)
+        .get();
+
+    if (queryResult.docs.isEmpty) {
+      bestScore = 0;
+      bestScoreRank = 0;// No score found for the user
+    } else {
+      Map<String, dynamic>? data = queryResult.docs.first.data() as Map<String, dynamic>?;
+      if (data != null) {
+        bestScore = data['score'] ?? 0;
+
+        String? timeElapsedString = data['timeElapsed'] as String?;
+        if (timeElapsedString != null) {
+          int timeElapsedInSeconds = convertTimeStringToSeconds(timeElapsedString);
+          bestScoreRank = await getRankForScore(bestScore, timeElapsedInSeconds);
+        } else {
+          // handle the case where timeElapsed is null
+        }
+      } else {
+        bestScore = 0;
+        bestScoreRank = 0;
+      }
+
+    }
+
     return fetchedScores;
   }
+  Future<int> getRankForScore(int score, int timeElapsedInSeconds) async {
+    // First count all the scores higher than the given score
+    AggregateQuerySnapshot scoresHigherThanGiven = await FirebaseFirestore.instance
+        .collection('endlessModeGameData')
+        .where('gameMode', isEqualTo: selectedMode.toString())
+        .where('score', isGreaterThan: score)
+        .count()
+        .get();
+
+    // Now, for the scores that are equal to the given score, count the ones with less time elapsed (i.e. faster completion times)
+    AggregateQuerySnapshot scoresEqualButFaster = await FirebaseFirestore.instance
+        .collection('endlessModeGameData')
+        .where('gameMode', isEqualTo: selectedMode.toString())
+        .where('score', isEqualTo: score)
+        .where('timeElapsed', isLessThanOrEqualTo: convertSecondsToTimeString(timeElapsedInSeconds))
+        .count()
+        .get();
+
+    // Subtract the number of scores that are exactly equal to the given timeElapsed
+    AggregateQuerySnapshot scoresExactlyEqualTime = await FirebaseFirestore.instance
+        .collection('endlessModeGameData')
+        .where('gameMode', isEqualTo: selectedMode.toString())
+        .where('score', isEqualTo: score)
+        .where('timeElapsed', isEqualTo: convertSecondsToTimeString(timeElapsedInSeconds))
+        .count()
+        .get();
+
+    // The rank will be the sum of scoresHigherThanGiven and scoresEqualButFaster minus scoresExactlyEqualTime plus one (1-based ranking)
+    int rank = scoresHigherThanGiven.count + scoresEqualButFaster.count - scoresExactlyEqualTime.count + 1;
+
+    return rank;
+  }
+
   Future<void> _loadNextPage() async {
     if (lastDocumentAllTime == null) {
       // We're already at the beginning, so just return
