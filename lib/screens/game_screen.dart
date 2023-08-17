@@ -1,11 +1,8 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:device_info_plus/device_info_plus.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -13,11 +10,12 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:technomaths/screens/wall_of_fame.dart';
 import 'package:technomaths/widgets/animated_buttons.dart';
-import 'package:technomaths/enums/game_mode.dart';
-import 'package:technomaths/enums/game_speed.dart';
-
+import 'package:technomaths/config/game_mode.dart';
+import 'package:technomaths/config/game_speed.dart';
+import '../config/ad_config.dart';
 import '../database/database_helper.dart';
-import '../utils/device_uuid_util.dart';
+import '../utils/commonFunctions.dart';
+import 'endless_mode_screen.dart';
 
 
 class GameScreen extends StatefulWidget {
@@ -50,20 +48,13 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   bool canRevive = true;
   RewardedAd? _rewardedAd;
   int _numRewardedLoadAttempts = 0;
-  static const int maxFailedLoadAttempts = 3;
+  static const int maxFailedLoadAttemptsRewarded = 3;
+  InterstitialAd? _interstitialAd;
+  int _numInterstitialLoadAttempts = 0;
+  int maxFailedLoadAttemptsInterstitial = 3;
   Color _backgroundColor = Colors.transparent;
-
-  static final AdRequest request = AdRequest(
-    keywords: <String>['foo', 'bar'],
-    contentUrl: 'http://foo.com/bar.html',
-    nonPersonalizedAds: true,
-  );
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
-
-
-
   Key key = UniqueKey();
-  // Check if the device can vibrate
   bool _canVibrate = false;
   late AnimationController _scoreController;
   late Animation<double> _scoreAnimation;
@@ -77,40 +68,30 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     _loadPlayerName();
     _loadHighestScore();
     _createRewardedAd();
+    _createInterstitialAd();
     generateQuestion();
-    _checkVibrationSupport();
     _scoreController = AnimationController(
         duration: Duration(milliseconds: 1000), vsync: this);
     _scoreAnimation = Tween<double>(begin: 0, end: 1).animate(_scoreController);
     startTotalGameTimer();
     dataSaved = 0;
     canRevive = true;
+    initAsync();
   }
 
-  Future<String?> getUniqueDeviceID() async {
-    final DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
-    if (kIsWeb) {
-      return null;
-    } else {
-      switch (defaultTargetPlatform) {
-        case TargetPlatform.android:
-          AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
-          return '${androidInfo.brand}-${androidInfo.model}-${androidInfo.product}-${androidInfo.fingerprint}';
-        case TargetPlatform.iOS:
-          IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
-          return iosInfo.identifierForVendor;
-      // Add more platforms if needed.
-        default:
-          return null;
-      }
-    }
+  Future<void> initAsync() async {
+    _canVibrate = await commonFunctions.checkVibrationSupport();
   }
 
+  //ads related
+  static const AdRequest request = AdRequest(
+    keywords: <String>['foo', 'bar'],
+    contentUrl: 'http://foo.com/bar.html',
+    nonPersonalizedAds: true,
+  );
   void _createRewardedAd() {
     RewardedAd.load(
-        adUnitId: Platform.isAndroid
-            ? 'ca-app-pub-6109906096472807/2881924681'
-            : 'ca-app-pub-6109906096472807/2881924681',
+        adUnitId: commonFunctions.getAdUnitId(AdType.rewarded),
         request: request,
         rewardedAdLoadCallback: RewardedAdLoadCallback(
           onAdLoaded: (RewardedAd ad) {
@@ -120,13 +101,12 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
           onAdFailedToLoad: (LoadAdError error) {
             _rewardedAd = null;
             _numRewardedLoadAttempts += 1;
-            if (_numRewardedLoadAttempts < maxFailedLoadAttempts) {
+            if (_numRewardedLoadAttempts < maxFailedLoadAttemptsRewarded) {
               _createRewardedAd();
             }
           },
         ));
   }
-
   void _showRewardedAd() {
     if (_rewardedAd == null) {
       return;
@@ -137,6 +117,11 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       onAdDismissedFullScreenContent: (RewardedAd ad) {
         ad.dispose();
         _createRewardedAd();
+
+        // This is where the ad has been closed.
+        if (lives > 0) {
+          startTimer();
+        }
       },
       onAdFailedToShowFullScreenContent: (RewardedAd ad, AdError error) {
         ad.dispose();
@@ -147,40 +132,53 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     _rewardedAd!.setImmersiveMode(true);
     _rewardedAd!.show(
         onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
-
           //ad viewed
           setState(() {
             lives += 1;   // Award an extra life
             canRevive = false;  // Ensure the user can't revive again until they lose again
-            startTimer(); // restart the timer or continue from where it was paused
           });
         });
     _rewardedAd = null;
   }
+  void _createInterstitialAd() {
+    InterstitialAd.load(
+        adUnitId: commonFunctions.getAdUnitId(AdType.interstitial),
+        request: AdRequest(),
+        adLoadCallback: InterstitialAdLoadCallback(
+          onAdLoaded: (InterstitialAd ad) {
+            _interstitialAd = ad;
+            _numInterstitialLoadAttempts = 0;
+            _showInterstitialAd();
+          },
+          onAdFailedToLoad: (LoadAdError error) {
+            _interstitialAd = null;
+            _numInterstitialLoadAttempts += 1;
+            if (_numInterstitialLoadAttempts < maxFailedLoadAttemptsInterstitial) {
+              _createInterstitialAd();
+            }
+          },
+        ));
+  }
+  void _showInterstitialAd() {
+    var rng = new Random();
+    if (rng.nextInt(100) < 20) {
+      if (_interstitialAd == null) {
+        return;
+      }
+      _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
+          onAdDismissedFullScreenContent: (InterstitialAd ad) {
+            ad.dispose();
+            _createInterstitialAd();  // Load another ad for next time
+          }, onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
+        ad.dispose();
+        _createInterstitialAd();  // Load another ad for next time
+      });
 
-
-  Future<void> _loadHighestScore() async {
-    final score = await DatabaseHelper.instance.queryHighestScore(widget.gameMode.toString());
-    setState(() {
-      highestScore = score;
-    });
+      _interstitialAd!.show();
+    }
   }
 
-  String getReadableTime(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
-    String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
-    return "${twoDigitMinutes}:${twoDigitSeconds}";
-  }
-
-  // Asynchronous method to check vibration support
-  Future<void> _checkVibrationSupport() async {
-    bool vibrationSupported = await Vibrate.canVibrate;
-    setState(() {
-      _canVibrate = vibrationSupported;
-    });
-  }
-
+  // game logic and functions
   @override
   void dispose() {
     timer?.cancel();
@@ -188,20 +186,6 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     _scoreController.dispose();
     super.dispose();
   }
-
-  void startTotalGameTimer() {
-    totalGameTimer = Timer.periodic(Duration(seconds: 1), (timer) {
-      setState(() {
-        totalTime = totalTime + Duration(seconds: 1);
-      });
-    });
-  }
-
-  void stopTotalGameTimer() {
-    totalGameTimer?.cancel();
-  }
-
-
   void increaseDifficulty() {
     // Increase maxNumber every 5 levels
     if (score <= 10) {
@@ -268,6 +252,18 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       }
     }
   }
+  String formatDecimal(String value) {
+    if (value.contains('.')) {
+      return double.parse(value).toStringAsFixed(2);
+    }
+    return value;  // return as-is if no decimal point
+  }
+  String getReadableTime(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
+    String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
+    return "$twoDigitMinutes:$twoDigitSeconds";
+  }
 
   void generateQuestion() {
     //cancel the old timer if its still running
@@ -278,7 +274,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       return;
     }
 
-    var rng = new Random();
+    var rng = Random();
     int number1, number2;
     String operator;
 
@@ -304,7 +300,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
         operator = '÷';
         correctAnswer = (number1 / number2);  // If it's division, take the floor (integer part) of the division
         break;
-      case GameMode.All: // In case of 'All', pick a random operator
+      case GameMode.Mix: // In case of 'All', pick a random operator
         operator = operators[rng.nextInt(operators.length)];
         correctAnswer = calculateAnswer(operator, number1, number2);  // Define a function to calculate the answer based on the operator
         break;
@@ -319,8 +315,6 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     // After generating a new question, start the timer again
     startTimer();
   }
-
-  // A function to calculate the correct answer
   dynamic calculateAnswer(String operator, int number1, int number2) {
     switch(operator) {
       case '+':
@@ -336,10 +330,8 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
         return 0;
     }
   }
-
-  // A function to generate four options
   List<String> generateOptions(dynamic correctAnswer) {
-    var rng = new Random();
+    var rng = Random();
     Set<String> optionsSet = {};
     optionsSet.add(correctAnswer.toString());  // Add correct answer to options
 
@@ -394,8 +386,6 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     optionsList.shuffle();
     return optionsList;
   }
-
-  // Add a checkAnswer function to update the score
   void checkAnswer(String selectedOption, dynamic correctAnswer) {
     // Cancel the timer regardless of the correctness of the answer
     timer?.cancel();
@@ -443,6 +433,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     }
   }
 
+  //time related
   void updateRemainingTime(){
     switch(widget.gameSpeed) {
       case GameSpeed.fifteen:
@@ -495,14 +486,13 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
         break;
     }
   }
-
   void startTimer() {
 
     updateRemainingTime();
 
     key = UniqueKey(); // Generate a new Key
 
-    const oneSec = const Duration(seconds: 1);
+    const oneSec = Duration(seconds: 1);
     timer = Timer.periodic(
       oneSec,
           (Timer timer) => setState(
@@ -517,7 +507,6 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       ),
     );
   }
-
   void endOfTimer() {
     Vibrate.feedback(FeedbackType.error);
     if(lives > 1) {
@@ -536,10 +525,20 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       timer?.cancel();
     }
   }
+  void stopTotalGameTimer() {
+    totalGameTimer?.cancel();
+  }
+  void startTotalGameTimer() {
+    totalGameTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+      setState(() {
+        totalTime = totalTime + Duration(seconds: 1);
+      });
+    });
+  }
 
+  //db functions
   void _saveGameData() async {
     if (_nameController.text.trim().isNotEmpty && dataSaved == 0) {
-
       // Local data saving logic
       Map<String, dynamic> row = {
         DatabaseHelper.columnName: _nameController.text,
@@ -548,21 +547,21 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
         DatabaseHelper.columnTimeElapsed: getReadableTime(totalTime)
       };
 
-      final id = await DatabaseHelper.instance.insert(row);
+      await DatabaseHelper.instance.insert(row);
 
       var connectivityResult = await (Connectivity().checkConnectivity());
 
       if (connectivityResult == ConnectivityResult.none) {
         // No internet connection
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Cannot connect to server'))
+            const SnackBar(content: Text('Cannot connect to server'))
         );
         return;
       } else {
         // Firebase data saving logic
         CollectionReference games = FirebaseFirestore.instance.collection('endlessModeGameData');
-        String? deviceInfo = await getUniqueDeviceID();
-        String deviceUID = await DeviceUUIDUtil.getDeviceUUID();
+        String? deviceInfo = await commonFunctions.getDeviceInfo();
+        String deviceUID = await commonFunctions.getDeviceUUID();
 
         Map<String, dynamic> firebaseRow = {
           'datetime': DateTime.now().toIso8601String(),  // Save the current date and time as a string in ISO format
@@ -579,10 +578,8 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
 
       dataSaved = 1;
     }
-
     canRevive = false;
   }
-
   _loadPlayerName() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? playerName = prefs.getString('playerName');
@@ -590,19 +587,16 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       _nameController.text = playerName ?? '';
     });
   }
-
   _savePlayerName(String name) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setString('playerName', name);
   }
-
-  String formatDecimal(String value) {
-    if (value.contains('.')) {
-      return double.parse(value).toStringAsFixed(2);
-    }
-    return value;  // return as-is if no decimal point
+  Future<void> _loadHighestScore() async {
+    final score = await DatabaseHelper.instance.queryHighestScore(widget.gameMode.toString());
+    setState(() {
+      highestScore = score;
+    });
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -612,12 +606,12 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.purple, size: 30),
+          icon: const Icon(Icons.arrow_back, color: Colors.blueAccent, size: 30),
           onPressed: () => Navigator.pop(context),
         ),
       ) : null,
       body: AnimatedContainer(
-        duration: Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 300),
         color: _backgroundColor,
         child: Stack(
           children: [
@@ -646,10 +640,10 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                                 ),
                               ),
                               // Spacer for a gap between text and progress bar
-                              SizedBox(height: 30),
+                              const SizedBox(height: 30),
                               // Progress bar
                               Container(
-                                padding: EdgeInsets.symmetric(horizontal: 30), // Padding for wider bar
+                                padding: const EdgeInsets.symmetric(horizontal: 30), // Padding for wider bar
                                 height: 10, // Height for progress bar
                                 child: TweenAnimationBuilder(
                                   key: key,
@@ -668,12 +662,12 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                             ],
                           ),
 
-                          SizedBox(height: 30),
+                          const SizedBox(height: 30),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: List.generate(lives, (index) => Icon(Icons.favorite, color: Colors.red, size: 40)).toList(),
                           ),
-                          SizedBox(height: 30),
+                          const SizedBox(height: 30),
                           Center(
                             child: Text(
                               'Score: $score',
@@ -727,100 +721,144 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
               ),
               Center(
                 child: Container(
-                  width: MediaQuery.of(context).size.width * 0.8, // 80% of screen width
-                  child: AlertDialog(
+                  width: MediaQuery.of(context).size.width * 0.6, // 80% of screen width
+                  child: Card(
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    backgroundColor: Colors.white,
-                    title: Text('Game Over', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: Colors.red, fontSize: 32)),
-                    content: SingleChildScrollView(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: <Widget>[
-                          Text('Your Name', textAlign: TextAlign.center,),
-                          TextField(
-                            controller: _nameController,
-                            textAlign: TextAlign.center,
-                            onChanged: (value) {
-                              _savePlayerName(value);
-                            },
-                          ),  // User can enter their name here
-                          SizedBox(height: 20),
-                          Text('Your Score: $score', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: Colors.purple, fontSize: 24)),
-                          SizedBox(height: 20),
-                          Text('Best Score: $highestScore', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: Colors.purple, fontSize: 24)),
-                          SizedBox(height: 30),
-                          if (canRevive && _rewardedAd != null) ...[
-                            ElevatedButton(
-                              onPressed: () {
-                                _showRewardedAd();
-                              },
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.play_arrow, color: Colors.white),  // Representing a video play button
-                                  SizedBox(width: 10),
-                                  Text('Revive', style: GoogleFonts.fredoka(color: Colors.white, fontSize: 18)),
+                    elevation: 5.0, // This gives shadow to the card
+                    child: Padding(
+                      padding: EdgeInsets.all(20),
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: <Widget>[
+                            Text('Game Over', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: Colors.red, fontSize: 32)),
+                            SizedBox(height: 20),
+                            Text('Your Name', textAlign: TextAlign.center,),
+                            SizedBox(height: 10),
+                            Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12.0),
+                                border: Border.all(color: Colors.blueAccent, width: 2.0),
+                                color: _nameController.text.isEmpty ? Colors.red[100] : Colors.grey[100],  // Check here
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.5),
+                                    spreadRadius: 2,
+                                    blurRadius: 5,
+                                    offset: Offset(0, 3),
+                                  ),
                                 ],
                               ),
-                              style: ElevatedButton.styleFrom(
-                                primary: Colors.green[500],
-                                onPrimary: Colors.white,
-                                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                                minimumSize: Size(MediaQuery.of(context).size.width * 0.7, 50),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30),
+                              child: TextField(
+                                controller: _nameController,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontSize: 20),
+                                decoration: InputDecoration(
+                                  hintText: 'Enter your name',
+                                  border: InputBorder.none,
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                                 ),
+                                onChanged: (value) {
+                                  _savePlayerName(value);
+                                  setState(() {});
+                                },
                               ),
                             ),
                             SizedBox(height: 20),
-                          ],
-                          ElevatedButton(
-                            onPressed: () {
-                              _saveGameData();
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => GameScreen(
-                                    gameMode: widget.gameMode,
-                                    gameSpeed: GameSpeed.fifteen,
+                            Text('Your Score: $score', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: Colors.blueAccent, fontSize: 24)),
+                            SizedBox(height: 20),
+                            Text('Best Score: $highestScore', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: Colors.blueAccent, fontSize: 24)),
+                            SizedBox(height: 30),
+                            if (canRevive == true && _rewardedAd != null && dataSaved == 0) ...[
+                              Material(
+                                elevation: 5.0,
+                                borderRadius: BorderRadius.circular(30),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        Colors.green[400]!,
+                                        Colors.green[700]!
+                                      ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                    borderRadius: BorderRadius.circular(30),
+                                  ),
+                                  child: InkWell(
+                                    onTap: () {
+                                      _showRewardedAd();
+                                    },
+                                    borderRadius: BorderRadius.circular(30),
+                                    child: Padding(
+                                      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(Icons.play_arrow, color: Colors.white, size: 24),
+                                          SizedBox(width: 10),
+                                          Text(
+                                            'Revive',
+                                            style: GoogleFonts.fredoka(
+                                              color: Colors.white,
+                                              fontSize: 18,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              );
-                            },
-                            child: Text('Retry', style: GoogleFonts.fredoka(color: Colors.white)),
-                            style: ElevatedButton.styleFrom(
-                              primary: Colors.purple, // This replaces the 'color' property
-                              minimumSize: Size(MediaQuery.of(context).size.width * 0.4, 50), // Button size is 40% of screen width and has a fixed height of 50.
+                              ),
+                              SizedBox(height: 20),
+                            ],
+                            AnimatedButton(
+                              'Retry',
+                              onPressed: () {
+                                _saveGameData();
+                                _showInterstitialAd();
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => GameScreen(
+                                      gameMode: widget.gameMode,
+                                      gameSpeed: GameSpeed.fifteen,
+                                    ),
+                                  ),
+                                ).then((_) {
+                                  setState(() {});
+                                });
+                              },
+                              verticalPadding: 10.0,
                             ),
-                          ),
-                          SizedBox(height: 15),
-                          ElevatedButton(
-                            onPressed: () {
-                              _saveGameData();
-                              Navigator.of(context).push(MaterialPageRoute(builder: (context) => WallOfFameScreen(
-                                gameMode: widget.gameMode,
-                              )));
-                            },  // Add functionality to go to Wall of Fame
-                            child: Text('Wall of Fame', style: GoogleFonts.fredoka(color: Colors.white)),
-                            style: ElevatedButton.styleFrom(
-                              primary: Colors.purple, // This replaces the 'color' property
-                              minimumSize: Size(MediaQuery.of(context).size.width * 0.4, 50), // Button size is 40% of screen width and has a fixed height of 50.
+                            AnimatedButton(
+                              'Wall of Fame',
+                              onPressed: () {
+                                _saveGameData();
+                                Navigator.of(context).push(MaterialPageRoute(builder: (context) => WallOfFameScreen(
+                                  gameMode: widget.gameMode,
+                                ))).then((_) {
+                                  setState(() {});
+                                });
+                              },
+                              verticalPadding: 10.0,
                             ),
-                          ),
-
-                          SizedBox(height: 15),
-                          ElevatedButton(
-                            onPressed: () => Navigator.pop(context), // Add functionality to go to Rate screen
-                            child: Text('Back', style: GoogleFonts.fredoka(color: Colors.white)),
-                            style: ElevatedButton.styleFrom(
-                              primary: Colors.purple, // This replaces the 'color' property
-                              minimumSize: Size(MediaQuery.of(context).size.width * 0.4, 50), // Button size is 40% of screen width and has a fixed height of 50.
-                            ),
-                          ),
-                        ],
+                            AnimatedButton(
+                              'Back',
+                              onPressed: () {
+                                _saveGameData();
+                                _showInterstitialAd();
+                                Navigator.of(context).push(MaterialPageRoute(builder: (context) => EndlessModeScreen())).then((_) {
+                                  setState(() {});
+                                });
+                              },
+                              verticalPadding: 10.0,
+                            )
+                          ],
+                        ),
                       ),
                     ),
                   ),

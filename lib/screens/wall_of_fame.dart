@@ -1,15 +1,15 @@
+import 'dart:ffi';
 import 'dart:math';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:technomaths/enums/game_mode.dart';
+import 'package:technomaths/config/game_mode.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-
 import '../database/database_helper.dart';
-import '../utils/device_uuid_util.dart';
+import '../config/ad_config.dart';
+import '../utils/commonFunctions.dart';
 
 class WallOfFameScreen extends StatefulWidget {
   GameMode gameMode;
@@ -23,20 +23,30 @@ class WallOfFameScreen extends StatefulWidget {
   _WallOfFameScreenState createState() => _WallOfFameScreenState();
 }
 
-class _WallOfFameScreenState extends State<WallOfFameScreen> {
-
+class _WallOfFameScreenState extends State<WallOfFameScreen>
+    with SingleTickerProviderStateMixin {
   List<Map<String, dynamic>> scores = [];
   List<Map<String, dynamic>> scores24h = [];
   List<Map<String, dynamic>> allTimeScores = [];
   List<Map<String, dynamic>> personalScores = [];
+  late TabController _tabController;
+  int bestScore = 0;
+  int bestScoreRank = 0;
 
   InterstitialAd? _interstitialAd;
   int _numInterstitialLoadAttempts = 0;
   int maxFailedLoadAttempts = 3;
 
-
   int rowsPerPage = 10; // Number of rows to show per page
+  int totalCount = 0;
+  int initialRow = 0;
+  int _tableKey = 0;
+  DocumentSnapshot? lastDocumentAllTime;
+
   GameMode selectedMode = GameMode.Addition;
+
+  //loading variables
+  bool _isLoadingAllTimeNextPage = false;
 
   // Load scores from the database upon initialization
   @override
@@ -44,25 +54,62 @@ class _WallOfFameScreenState extends State<WallOfFameScreen> {
     super.initState();
     _createInterstitialAd();
     selectedMode = widget.gameMode;
-    _loadScores();  // for local scores
-    _loadAllTimeScores().then((fetchedScores) {
+    _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(_handleTabSelection);
+    _loadScores();
+  }
+  void _handleTabSelection() {
+    var previousMode;
+    if (_tabController.indexIsChanging || previousMode != selectedMode) {
       setState(() {
-        allTimeScores = fetchedScores;
+        initialRow = 0; // reset the initial row index
       });
-      _load24hScores().then((fetchedScores) {
-        setState(() {
-          scores24h = fetchedScores;
-        });
-      });
-      _fetchPersonalScores();
-    });
+      //reset the scores
+      bestScoreRank = 0;
+      bestScore = 0;
+      previousMode = selectedMode;
+      switch (_tabController.index) {
+        case 0: // Local
+          _loadScores(); // This fetches scores from local db
+          break;
+        case 1: // 24h
+          _load24hScores().then((fetchedScores) {
+            setState(() {
+              scores24h = fetchedScores;
+            });
+          }); // Fetches 24-hour scores from Firestore
+          _buildScoreList(scores24h, selectedMode, '24h');
+          break;
+        case 2: // All Time
+          _loadAllTimeScores().then((fetchedScores) {
+            setState(() {
+              allTimeScores = fetchedScores;
+            });
+          });
+          _buildScoreList(allTimeScores, selectedMode, 'All Time');
+          break;
+      }
+    }
+  }
+  int convertTimeStringToSeconds(String time) {
+    List<String> parts = time.split(':');
+    if (parts.length != 2) return 0;
+
+    int minutes = int.tryParse(parts[0]) ?? 0;
+    int seconds = int.tryParse(parts[1]) ?? 0;
+
+    return minutes * 60 + seconds;
+  }
+  String convertSecondsToTimeString(int totalSeconds) {
+    int minutes = totalSeconds ~/ 60;
+    int seconds = totalSeconds % 60;
+
+    return "${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}";
   }
 
   void _createInterstitialAd() {
     InterstitialAd.load(
-        adUnitId: Platform.isAndroid
-            ? 'ca-app-pub-6109906096472807/4941429048'
-            : 'ca-app-pub-6109906096472807/4941429048',
+        adUnitId: commonFunctions.getAdUnitId(AdType.interstitial),
         request: AdRequest(),
         adLoadCallback: InterstitialAdLoadCallback(
           onAdLoaded: (InterstitialAd ad) {
@@ -79,114 +126,35 @@ class _WallOfFameScreenState extends State<WallOfFameScreen> {
           },
         ));
   }
-
-  void showAd(){
+  void showAd() {
     var rng = new Random();
-    if (rng.nextInt(100) < 30) {
+    if (rng.nextInt(100) < 50) {
       if (_interstitialAd == null) {
         return;
       }
       _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
           onAdDismissedFullScreenContent: (InterstitialAd ad) {
-            ad.dispose();
-            //_createInterstitialAd();  // Load another ad for next time
-          },
-          onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
-            ad.dispose();
-            //_createInterstitialAd();  // Load another ad for next time
-          }
-      );
+        ad.dispose();
+        //_createInterstitialAd();  // Load another ad for next time
+      }, onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
+        ad.dispose();
+        //_createInterstitialAd();  // Load another ad for next time
+      });
 
       _interstitialAd!.show();
     }
   }
-
-  Future<void> _fetchPersonalScores() async {
-    String deviceUUID = await DeviceUUIDUtil.getDeviceUUID();
-
-    // Filter scores based on deviceUUID and sort them
-    List<Map<String, dynamic>> filteredScores = allTimeScores
-        .where((score) => score['deviceUID'] == deviceUUID)
-        .where((score) => score['gameMode'] == selectedMode.toString())
-        .toList();
-
-    // Sort the scores in descending order
-    filteredScores.sort((a, b) => b['score'].compareTo(a['score']));
-
-    setState(() {
-      personalScores = filteredScores;
-    });
-  }
-
-
-
-  int? _getPersonalBestRank(List<Map<String, dynamic>> scores) {
-    if (personalScores != null && personalScores!.isNotEmpty) {
-      var personalBest = personalScores![0]['score'];
-      for (int i = 0; i < scores.length; i++) {
-        if (scores[i]['score'] <= personalBest) {
-          return i + 1;
-        }
-      }
-    }
-    return null;
-  }
-
-  Future<List<Map<String, dynamic>>> _load24hScores() async {
-    final endTime = DateTime.now().add(Duration(minutes: 1));
-    final startTime = endTime.subtract(Duration(hours: 24));
-
-    // Filter scores that fall within the last 24 hours from the allTimeScores list
-    List<Map<String, dynamic>> fetchedScores = allTimeScores
-        .where((score) {
-      DateTime scoreDateTime = DateTime.parse(score['datetime']);
-      return scoreDateTime.isAfter(startTime) && scoreDateTime.isBefore(endTime);
-    }).toList();
-
-    fetchedScores.sort((a, b) {
-      int compareScore = b['score'].compareTo(a['score']);
-
-      if (compareScore == 0) {
-        return a['timeElapsed'].compareTo(b['timeElapsed']);
-      }
-
-      return compareScore;
-    });
-
-    return fetchedScores;
-  }
-
-  Future<List<Map<String, dynamic>>> _loadAllTimeScores() async {
-    QuerySnapshot snapshot = await FirebaseFirestore.instance
-        .collection('endlessModeGameData')
-        .get();
-
-    List<Map<String, dynamic>> fetchedScores = snapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
-
-    fetchedScores.sort((a, b) {
-      int compareScore = b['score'].compareTo(a['score']);
-
-      if (compareScore == 0) {
-        return a['timeElapsed'].compareTo(b['timeElapsed']);
-      }
-
-      return compareScore;
-    });
-
-    return fetchedScores;
-  }
-
   Future<void> _loadScores() async {
-    List<Map<String, dynamic>> dbRows = await DatabaseHelper.instance.queryAllRows();
+    List<Map<String, dynamic>> dbRows = await DatabaseHelper.instance
+        .queryRowsByGameMode(selectedMode.toString());
     // Create a new list from the database result to avoid read-only issues
     List<Map<String, dynamic>> rows = List.from(dbRows);
+    totalCount = rows.length;
 
     rows.sort((a, b) {
       int compareScore = b['score'].compareTo(a['score']);
 
       if (compareScore == 0) {
-        // Assuming 'timeElapsed' is in format 'mm:ss', you can compare as strings
-        // because '05:00' < '06:00' and '05:01' < '05:02'
         return a['timeElapsed'].compareTo(b['timeElapsed']);
       }
 
@@ -198,173 +166,401 @@ class _WallOfFameScreenState extends State<WallOfFameScreen> {
     });
   }
 
+  Future<List<Map<String, dynamic>>> _load24hScores() async {
+    final endTime = DateTime.now().add(Duration(minutes: 1));
+    final startTime = endTime.subtract(Duration(hours: 24));
+    String startIsoString = startTime.toIso8601String();
+    String endIsoString = endTime.toIso8601String();
+
+    //filter and get the 24h scores that falls in the time limit
+    QuerySnapshot snapshot = await FirebaseFirestore.instance
+        .collection('endlessModeGameData')
+        .where('gameMode', isEqualTo: selectedMode.toString())
+        .where('datetime', isGreaterThanOrEqualTo: startIsoString)
+        .where('datetime', isLessThanOrEqualTo: endIsoString)
+        .get();
+
+    totalCount = snapshot.size;
+    List<Map<String, dynamic>> fetchedScores =
+        snapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
+    fetchedScores.sort((a, b) {
+      int compareScore = b['score'].compareTo(a['score']);
+
+      if (compareScore == 0) {
+        return a['timeElapsed'].compareTo(b['timeElapsed']);
+      }
+
+      return compareScore;
+    });
+
+    //get personal best and rank
+    String deviceUUID = await commonFunctions.getDeviceUUID();
+    int highestScoreForUUID = 0;
+    int rankForUUID = -1;
+
+    for (int i = 0; i < fetchedScores.length; i++) {
+      Map<String, dynamic> entry = fetchedScores[i];
+      if (entry['deviceUID'] == deviceUUID) {
+        if (entry['score'] > highestScoreForUUID) {
+          highestScoreForUUID = entry['score'];
+          rankForUUID = i + 1; // +1 because list index starts at 0
+        }
+      }
+    }
+
+    if (highestScoreForUUID != 0 && rankForUUID != -1) {
+      bestScore = highestScoreForUUID;
+      bestScoreRank = rankForUUID;
+    }
+    totalCount = fetchedScores.length;
+    return fetchedScores;
+  }
+  Future<List<Map<String, dynamic>>> _loadAllTimeScores() async {
+    //get total count and update it
+    AggregateQuerySnapshot countSnapshot = await FirebaseFirestore.instance
+        .collection('endlessModeGameData')
+        .where('gameMode', isEqualTo: selectedMode.toString())
+        .count()
+        .get();
+    totalCount = countSnapshot.count;
+
+    Query query = FirebaseFirestore.instance
+        .collection('endlessModeGameData')
+        .where('gameMode', isEqualTo: selectedMode.toString())
+        .orderBy('score', descending: true)
+        .orderBy('timeElapsed')
+        .limit(rowsPerPage);
+
+    QuerySnapshot snapshot = await query.get();
+
+    if (snapshot.docs.isNotEmpty) {
+      lastDocumentAllTime = snapshot.docs.last;
+    }
+
+    List<Map<String, dynamic>> fetchedScores =
+        snapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
+
+    //get players highest score
+    String deviceUUID = await commonFunctions.getDeviceUUID();
+    QuerySnapshot queryResult = await FirebaseFirestore.instance
+        .collection('endlessModeGameData')
+        .where('gameMode', isEqualTo: selectedMode.toString())
+        .where('deviceUID', isEqualTo: deviceUUID)
+        .orderBy('score', descending: true)
+        .limit(1)
+        .get();
+
+    if (queryResult.docs.isEmpty) {
+      bestScore = 0;
+      bestScoreRank = 0;// No score found for the user
+    } else {
+      Map<String, dynamic>? data = queryResult.docs.first.data() as Map<String, dynamic>?;
+      if (data != null) {
+        bestScore = data['score'] ?? 0;
+
+        String? timeElapsedString = data['timeElapsed'] as String?;
+        if (timeElapsedString != null) {
+          int timeElapsedInSeconds = convertTimeStringToSeconds(timeElapsedString);
+          bestScoreRank = await getRankForScore(bestScore, timeElapsedInSeconds);
+        } else {
+          // handle the case where timeElapsed is null
+        }
+      } else {
+        bestScore = 0;
+        bestScoreRank = 0;
+      }
+
+    }
+
+    return fetchedScores;
+  }
+  Future<int> getRankForScore(int score, int timeElapsedInSeconds) async {
+    // First count all the scores higher than the given score
+    AggregateQuerySnapshot scoresHigherThanGiven = await FirebaseFirestore.instance
+        .collection('endlessModeGameData')
+        .where('gameMode', isEqualTo: selectedMode.toString())
+        .where('score', isGreaterThan: score)
+        .count()
+        .get();
+
+    // Now, for the scores that are equal to the given score, count the ones with less time elapsed (i.e. faster completion times)
+    AggregateQuerySnapshot scoresEqualButFaster = await FirebaseFirestore.instance
+        .collection('endlessModeGameData')
+        .where('gameMode', isEqualTo: selectedMode.toString())
+        .where('score', isEqualTo: score)
+        .where('timeElapsed', isLessThanOrEqualTo: convertSecondsToTimeString(timeElapsedInSeconds))
+        .count()
+        .get();
+
+    // Subtract the number of scores that are exactly equal to the given timeElapsed
+    AggregateQuerySnapshot scoresExactlyEqualTime = await FirebaseFirestore.instance
+        .collection('endlessModeGameData')
+        .where('gameMode', isEqualTo: selectedMode.toString())
+        .where('score', isEqualTo: score)
+        .where('timeElapsed', isEqualTo: convertSecondsToTimeString(timeElapsedInSeconds))
+        .count()
+        .get();
+
+    // The rank will be the sum of scoresHigherThanGiven and scoresEqualButFaster minus scoresExactlyEqualTime plus one (1-based ranking)
+    int rank = scoresHigherThanGiven.count + scoresEqualButFaster.count - scoresExactlyEqualTime.count + 1;
+
+    return rank;
+  }
+
+  Future<void> _loadNextPage() async {
+    if (lastDocumentAllTime == null) {
+      // We're already at the beginning, so just return
+      return;
+    }
+
+    if (_isLoadingAllTimeNextPage) return;
+    _isLoadingAllTimeNextPage = true;
+    Query query = FirebaseFirestore.instance
+        .collection('endlessModeGameData')
+        .where('gameMode', isEqualTo: selectedMode.toString())
+        .orderBy('score', descending: true)
+        .orderBy('timeElapsed')
+        .limit(rowsPerPage)
+        .startAfterDocument(lastDocumentAllTime!);
+
+    QuerySnapshot snapshot = await query.get();
+
+    if (snapshot.docs.isNotEmpty) {
+      lastDocumentAllTime = snapshot.docs.last;
+      List<Map<String, dynamic>> newScores = snapshot.docs
+          .map((doc) => doc.data() as Map<String, dynamic>)
+          .toList();
+
+      // Assuming scores is a member variable, update it
+      allTimeScores.addAll(newScores);
+
+      // Trigger a rebuild so that the new scores are reflected
+      setState(() {});
+    }
+    _isLoadingAllTimeNextPage = false;
+  }
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text('Wall of Fame', style: GoogleFonts.fredoka(fontSize: 22)), // Use a different font
-          backgroundColor: Colors.deepPurple, // Gradient start color
-          flexibleSpace: Container(
+        length: 3,
+        child: Scaffold(
+          appBar: AppBar(
+            title:
+                Text('Wall of Fame', style: GoogleFonts.fredoka(fontSize: 22)),
+            // Use a different font
+            backgroundColor: Colors.deepPurple,
+            // Gradient start color
+            flexibleSpace: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Colors.deepPurple, Colors.blueAccent],
+                ),
+              ),
+            ),
+            bottom: TabBar(
+              controller: _tabController,
+              indicatorColor: Colors.yellowAccent,
+              indicatorSize: TabBarIndicatorSize.label,
+              tabs: [
+                Tab(icon: Icon(Icons.home), text: 'Local'),
+                Tab(icon: Icon(Icons.access_time), text: '24h'),
+                Tab(icon: Icon(Icons.stars), text: 'All Time'),
+              ],
+            ),
+          ),
+          body: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Colors.deepPurple, Colors.blueAccent],
+                begin: Alignment.topRight,
+                end: Alignment.bottomLeft,
+                colors: [
+                  Colors.blueAccent.withOpacity(0.2),
+                  Colors.deepPurple.withOpacity(0.2)
+                ],
               ),
             ),
-          ),
-          bottom: TabBar(
-            indicatorColor: Colors.yellowAccent,
-            indicatorSize: TabBarIndicatorSize.label,
-            tabs: [
-              Tab(icon: Icon(Icons.home), text: 'Local'),
-              Tab(icon: Icon(Icons.access_time), text: '24h'),
-              Tab(icon: Icon(Icons.stars), text: 'All Time'),
-            ],
-          ),
-        ),
-        body: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topRight,
-              end: Alignment.bottomLeft,
-              colors: [Colors.blueAccent.withOpacity(0.2), Colors.deepPurple.withOpacity(0.2)],
-            ),
-          ),
-          child: TabBarView(
-            children: [
-              _buildScoreList(scores, selectedMode, 'local'),
-              _buildScoreList(scores24h, selectedMode, '24h'),
-              _buildScoreList(allTimeScores, selectedMode, 'allTime'),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildScoreList(List<Map<String, dynamic>> scores, GameMode mode, String tabType) {
-    var filteredScores = scores.where((score) => score['gameMode'] == mode.toString()).toList();
-    int? personalBestRank = _getPersonalBestRank(filteredScores);
-
-    return SingleChildScrollView(
-      child: Container(
-        margin: EdgeInsets.all(10.0),
-        padding: EdgeInsets.symmetric(vertical: 20.0, horizontal: 15.0),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.9),
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 10,
-              offset: Offset(0, 5),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            if (personalBestRank != null && personalScores != null && personalScores!.isNotEmpty && tabType != 'local')
-              Container(
-                margin: EdgeInsets.only(bottom: 16.0),
-                padding: EdgeInsets.all(8.0),
-                decoration: BoxDecoration(
-                  color: Colors.amber[100],
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
+            child: Stack(
+              children: [
+                TabBarView(
+                  controller: _tabController,
                   children: [
-                    Text(
-                      "Your Best Score: ${personalScores![0]['score']}",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    Spacer(),
-                    Text("Rank: $personalBestRank"),
+                    _buildScoreList(scores, selectedMode, 'local'),
+                    _buildScoreList(scores24h, selectedMode, '24h'),
+                    _buildScoreList(allTimeScores, selectedMode, 'allTime'),
                   ],
                 ),
-              ),
-            PaginatedDataTable(
-              header: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Scores',
-                      style: GoogleFonts.fredoka(fontWeight: FontWeight.bold, fontSize: 24),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  SizedBox(width: 8),
-                  Container(
-                    padding: EdgeInsets.symmetric(vertical: 5.0, horizontal: 10.0),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.deepPurple, Colors.blueAccent],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(12.0),
-                    ),
-                    child: PopupMenuButton<GameMode>(
-                      onSelected: (GameMode mode) {
-                        setState(() {
-                          selectedMode = mode;
-                        });
-                        _fetchPersonalScores();
-                      },
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            selectedMode.toString().split('.').last,
-                            style: GoogleFonts.fredoka(fontWeight: FontWeight.normal, fontSize: 18, color: Colors.white),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          SizedBox(width: 8),
-                          Icon(Icons.arrow_drop_down, color: Colors.white),
-                        ],
-                      ),
-                      itemBuilder: (BuildContext context) => GameMode.values.map((GameMode mode) {
-                        return PopupMenuItem<GameMode>(
-                          value: mode,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                mode.toString().split('.').last,
-                                style: GoogleFonts.fredoka(fontWeight: FontWeight.normal, fontSize: 16),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              Icon(_getIconForMode(mode), color: Colors.deepPurple),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                    ),
+              ],
+            ),
+          ),
+        ));
+  }
+
+  Widget _buildScoreList(
+      List<Map<String, dynamic>> scores, GameMode mode, String tabType) {
+    return FutureBuilder(
+        // Delay for 2 seconds
+        future: Future.delayed(Duration(seconds: 2), () => scores),
+        builder: (BuildContext context, AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
+          var filteredScores = scores;
+          if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
+            filteredScores = scores;
+          }
+
+          return SingleChildScrollView(
+            child: Container(
+              margin: EdgeInsets.all(10.0),
+              padding: EdgeInsets.symmetric(vertical: 20.0, horizontal: 15.0),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 10,
+                    offset: Offset(0, 5),
                   ),
                 ],
               ),
-              columns: [
-                DataColumn(
-                  label: Center(child: Text('#', style: GoogleFonts.fredoka(fontWeight: FontWeight.bold, fontSize: 18))),
-                ),
-                DataColumn(
-                  label: Center(child: Text('Name', style: GoogleFonts.fredoka(fontWeight: FontWeight.bold, fontSize: 18))),
-                ),
-                DataColumn(
-                  label: Center(child: Text('Score', style: GoogleFonts.fredoka(fontWeight: FontWeight.bold, fontSize: 18))),
-                ),
-                DataColumn(
-                  label: Center(child: Text('Time', style: GoogleFonts.fredoka(fontWeight: FontWeight.bold, fontSize: 18))),
-                ),
-              ],
-              source: _DataTableSource(filteredScores),
+              child: Column(
+                children: [
+                  if (tabType != 'local' &&
+                      bestScore != 0 &&
+                      bestScoreRank != 0)
+                    Container(
+                      margin: EdgeInsets.only(bottom: 16.0),
+                      padding: EdgeInsets.all(8.0),
+                      decoration: BoxDecoration(
+                        color: Colors.amber[100],
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          Text(
+                            "Your Best Score: ${bestScore}",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          Spacer(),
+                          Text("Rank: $bestScoreRank"),
+                        ],
+                      ),
+                    ),
+                  PaginatedDataTable(
+                    key: ValueKey(_tableKey),
+                    rowsPerPage: rowsPerPage,
+                    initialFirstRowIndex: initialRow,
+                    header: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Scores',
+                            style: GoogleFonts.fredoka(
+                                fontWeight: FontWeight.bold, fontSize: 24),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                              vertical: 5.0, horizontal: 10.0),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Colors.deepPurple, Colors.blueAccent],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(12.0),
+                          ),
+                          child: PopupMenuButton<GameMode>(
+                            onSelected: (GameMode mode) {
+                              setState(() {
+                                selectedMode = mode;
+                                initialRow = 0;
+                                _tableKey++;
+                              });
+                              _handleTabSelection();
+                            },
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  selectedMode.toString().split('.').last,
+                                  style: GoogleFonts.fredoka(
+                                      fontWeight: FontWeight.normal,
+                                      fontSize: 18,
+                                      color: Colors.white),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                SizedBox(width: 8),
+                                Icon(Icons.arrow_drop_down,
+                                    color: Colors.white),
+                              ],
+                            ),
+                            itemBuilder: (BuildContext context) =>
+                                GameMode.values.map((GameMode mode) {
+                              return PopupMenuItem<GameMode>(
+                                value: mode,
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      mode.toString().split('.').last,
+                                      style: GoogleFonts.fredoka(
+                                          fontWeight: FontWeight.normal,
+                                          fontSize: 16),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    Icon(_getIconForMode(mode),
+                                        color: Colors.deepPurple),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ],
+                    ),
+                    columns: [
+                      DataColumn(
+                        label: Center(
+                            child: Text('#',
+                                style: GoogleFonts.fredoka(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18))),
+                      ),
+                      DataColumn(
+                        label: Center(
+                            child: Text('Name',
+                                style: GoogleFonts.fredoka(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18))),
+                      ),
+                      DataColumn(
+                        label: Center(
+                            child: Text('Score',
+                                style: GoogleFonts.fredoka(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18))),
+                      ),
+                      DataColumn(
+                        label: Center(
+                            child: Text('Time',
+                                style: GoogleFonts.fredoka(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18))),
+                      ),
+                    ],
+                    source: _DataTableSource(
+                        filteredScores, totalCount, _loadNextPage),
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
-      ),
-    );
+          );
+        });
   }
 }
 
@@ -375,11 +571,13 @@ IconData _getIconForMode(GameMode mode) {
     case GameMode.Subtraction:
       return Icons.remove_circle_outline;
     case GameMode.Multiplication:
-      return Icons.close;  // using the 'close' icon which looks like a multiplication sign (x)
+      return Icons
+          .close; // using the 'close' icon which looks like a multiplication sign (x)
     case GameMode.Division:
-      return Icons.horizontal_split;  // using the 'horizontal_split' which can represent division
-    case GameMode.All:
-      return Icons.all_inclusive;  // a general icon to represent 'all'
+      return Icons
+          .horizontal_split; // using the 'horizontal_split' which can represent division
+    case GameMode.Mix:
+      return Icons.all_inclusive; // a general icon to represent 'all'
     default:
       return Icons.help_outline;
   }
@@ -387,11 +585,18 @@ IconData _getIconForMode(GameMode mode) {
 
 class _DataTableSource extends DataTableSource {
   final List<Map<String, dynamic>> scores;
+  final int totalCount;
+  final VoidCallback loadNextPage;
 
-  _DataTableSource(this.scores);
+  _DataTableSource(this.scores, this.totalCount, this.loadNextPage);
 
   @override
-  DataRow getRow(int index) {
+  DataRow? getRow(int index) {
+    if (index >= scores.length && index <= totalCount) {
+      // Fetch the next page of data
+      loadNextPage();
+      return null; // Return null for now, data will be updated when fetched
+    }
     return DataRow(
       cells: [
         DataCell(Center(child: Text((index + 1).toString()))),
@@ -406,7 +611,7 @@ class _DataTableSource extends DataTableSource {
   bool get isRowCountApproximate => false;
 
   @override
-  int get rowCount => scores.length;
+  int get rowCount => totalCount;
 
   @override
   int get selectedRowCount => 0;
