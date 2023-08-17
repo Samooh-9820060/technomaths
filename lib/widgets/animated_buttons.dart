@@ -4,8 +4,9 @@ import 'package:google_fonts/google_fonts.dart';
 class AnimatedButton extends StatelessWidget {
   final String text;
   final VoidCallback onPressed;
+  final double verticalPadding;
 
-  AnimatedButton(this.text, {required this.onPressed});
+  AnimatedButton(this.text, {required this.onPressed, this.verticalPadding = 20.0});
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +27,7 @@ class AnimatedButton extends StatelessWidget {
         ),
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20), // Reduced padding
+            padding: EdgeInsets.symmetric(horizontal: 30, vertical: verticalPadding), // Reduced padding
             primary: Colors.transparent, // This will ensure the gradient shows
             onPrimary: Colors.white,
             shadowColor: Colors.transparent, // No shadow since we already have elevation from the container
