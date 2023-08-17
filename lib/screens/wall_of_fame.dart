@@ -38,6 +38,8 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
 
   int rowsPerPage = 10; // Number of rows to show per page
   int totalCount = 0;
+  int initialRow = 0;
+  int _tableKey = 0;
   DocumentSnapshot? lastDocumentAllTime;
 
   GameMode selectedMode = GameMode.Addition;
@@ -59,6 +61,9 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
   void _handleTabSelection() {
     var previousMode;
     if (_tabController.indexIsChanging || previousMode != selectedMode) {
+      setState(() {
+        initialRow = 0; // reset the initial row index
+      });
       previousMode = selectedMode;
       switch (_tabController.index) {
         case 0: // Local
@@ -364,7 +369,9 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
                       ),
                     ),
                   PaginatedDataTable(
+                    key: ValueKey(_tableKey),
                     rowsPerPage: rowsPerPage,
+                    initialFirstRowIndex: initialRow,
                     header: Row(
                       children: [
                         Expanded(
@@ -391,6 +398,8 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
                             onSelected: (GameMode mode) {
                               setState(() {
                                 selectedMode = mode;
+                                initialRow = 0;
+                                _tableKey++;
                               });
                               _handleTabSelection();
                             },
