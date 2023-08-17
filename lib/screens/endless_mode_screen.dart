@@ -7,6 +7,8 @@ import 'package:technomaths/screens/game_screen.dart';
 import 'package:technomaths/config/game_mode.dart';
 import 'package:technomaths/config/game_speed.dart';
 
+import 'home_screen.dart';
+
 
 class EndlessModeScreen extends StatelessWidget {
   const EndlessModeScreen({Key? key}) : super(key: key);
@@ -27,7 +29,12 @@ class EndlessModeScreen extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.blueAccent, size: 30),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () async {
+            Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const HomeScreen())
+            );
+          },
         ),
       ),
       body: Center(

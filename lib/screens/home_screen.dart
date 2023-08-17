@@ -49,14 +49,14 @@ class HomeScreen extends StatelessWidget {
                       gameMode: GameMode.Addition,
                     )));
               }),
-              AnimatedButton('Settings', onPressed: () async {
+              /*AnimatedButton('Settings', onPressed: () async {
                 await performVibration();
                 // Settings code
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => SettingsScreen()),
                 );
-              }),
+              }),*/
               AnimatedButton('Quit', onPressed: () async {
                 await performVibration();
                 // Code to quit the app
