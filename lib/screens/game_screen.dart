@@ -48,7 +48,10 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   bool canRevive = true;
   RewardedAd? _rewardedAd;
   int _numRewardedLoadAttempts = 0;
-  static const int maxFailedLoadAttempts = 3;
+  static const int maxFailedLoadAttemptsRewarded = 3;
+  InterstitialAd? _interstitialAd;
+  int _numInterstitialLoadAttempts = 0;
+  int maxFailedLoadAttemptsInterstitial = 3;
   Color _backgroundColor = Colors.transparent;
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
   Key key = UniqueKey();
@@ -65,6 +68,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     _loadPlayerName();
     _loadHighestScore();
     _createRewardedAd();
+    _createInterstitialAd();
     generateQuestion();
     _scoreController = AnimationController(
         duration: Duration(milliseconds: 1000), vsync: this);
@@ -97,7 +101,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
           onAdFailedToLoad: (LoadAdError error) {
             _rewardedAd = null;
             _numRewardedLoadAttempts += 1;
-            if (_numRewardedLoadAttempts < maxFailedLoadAttempts) {
+            if (_numRewardedLoadAttempts < maxFailedLoadAttemptsRewarded) {
               _createRewardedAd();
             }
           },
@@ -135,6 +139,43 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
           });
         });
     _rewardedAd = null;
+  }
+  void _createInterstitialAd() {
+    InterstitialAd.load(
+        adUnitId: commonFunctions.getAdUnitId(AdType.interstitial),
+        request: AdRequest(),
+        adLoadCallback: InterstitialAdLoadCallback(
+          onAdLoaded: (InterstitialAd ad) {
+            _interstitialAd = ad;
+            _numInterstitialLoadAttempts = 0;
+            _showInterstitialAd();
+          },
+          onAdFailedToLoad: (LoadAdError error) {
+            _interstitialAd = null;
+            _numInterstitialLoadAttempts += 1;
+            if (_numInterstitialLoadAttempts < maxFailedLoadAttemptsInterstitial) {
+              _createInterstitialAd();
+            }
+          },
+        ));
+  }
+  void _showInterstitialAd() {
+    var rng = new Random();
+    if (rng.nextInt(100) < 20) {
+      if (_interstitialAd == null) {
+        return;
+      }
+      _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
+          onAdDismissedFullScreenContent: (InterstitialAd ad) {
+            ad.dispose();
+            _createInterstitialAd();  // Load another ad for next time
+          }, onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
+        ad.dispose();
+        _createInterstitialAd();  // Load another ad for next time
+      });
+
+      _interstitialAd!.show();
+    }
   }
 
   // game logic and functions
@@ -778,6 +819,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                               'Retry',
                               onPressed: () {
                                 _saveGameData();
+                                _showInterstitialAd();
                                 Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
@@ -808,6 +850,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                               'Back',
                               onPressed: () {
                                 _saveGameData();
+                                _showInterstitialAd();
                                 Navigator.of(context).push(MaterialPageRoute(builder: (context) => EndlessModeScreen())).then((_) {
                                   setState(() {});
                                 });

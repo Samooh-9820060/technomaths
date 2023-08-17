@@ -128,7 +128,7 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
   }
   void showAd() {
     var rng = new Random();
-    if (rng.nextInt(100) < 30) {
+    if (rng.nextInt(100) < 50) {
       if (_interstitialAd == null) {
         return;
       }
@@ -144,7 +144,6 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
       _interstitialAd!.show();
     }
   }
-
   Future<void> _loadScores() async {
     List<Map<String, dynamic>> dbRows = await DatabaseHelper.instance
         .queryRowsByGameMode(selectedMode.toString());
@@ -166,6 +165,7 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
       scores = rows;
     });
   }
+
   Future<List<Map<String, dynamic>>> _load24hScores() async {
     final endTime = DateTime.now().add(Duration(minutes: 1));
     final startTime = endTime.subtract(Duration(hours: 24));
