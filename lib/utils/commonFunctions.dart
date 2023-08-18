@@ -100,4 +100,16 @@ class commonFunctions {
     });
   }
 
+
+
+  //get set shared preferences
+  static Future<bool> isNotificationAllowed() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('isNotificationsOn') ?? true;  // default to true if not set
+  }
+  static updatePreference(String key, bool value) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setBool(key, value);
+  }
+
 }

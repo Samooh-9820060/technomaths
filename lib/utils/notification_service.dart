@@ -25,11 +25,16 @@ class NotificationService {
         alarmId,
         scheduleDynamicNotification,
     );
-    print('date is '+DateTime.now().toString());
   }
 
   @pragma('vm:entry-point')
   static Future<void> scheduleDynamicNotification() async {
+
+    bool showNotification = await commonFunctions.isNotificationAllowed();
+    if (!showNotification) {
+      return; // Exit if notifications are turned off
+    }
+
     await Firebase.initializeApp();
 
     // Fetch player's highest score
@@ -44,8 +49,6 @@ class NotificationService {
 
     final String title = "TechnoMaths";
     final String body = await FirestoreService.generateMessage(randomGameMode, score!, rank!);
-
-    print(body);
 
     // Notification details
     const int notificationId = 0;
