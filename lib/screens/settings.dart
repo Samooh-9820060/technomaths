@@ -10,21 +10,32 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _isVibrationOn = true;
   bool _isNotificationsOn = true;
+
   //bool _isDarkTheme = true;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadPreferences();
+    _loadInitialPreferences();
   }
 
-  _loadPreferences() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
+  _loadInitialPreferences() async {
+    var preferences = await _loadPreferences();
     setState(() {
-      _isVibrationOn = prefs.getBool('isVibrationOn') ?? true;
-      _isNotificationsOn = prefs.getBool('isNotificationsOn') ?? true;
-      //_isDarkTheme = prefs.getBool('isDarkTheme') ?? true;
+      _isVibrationOn = preferences['isVibrationOn']!;
+      _isNotificationsOn = preferences['isNotificationsOn']!;
+      _isLoading = false;
     });
+  }
+
+  Future<Map<String, bool>> _loadPreferences() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return {
+      'isVibrationOn': prefs.getBool('isVibrationOn') ?? true,
+      'isNotificationsOn': prefs.getBool('isNotificationsOn') ?? true,
+      //'isDarkTheme': prefs.getBool('isDarkTheme') ?? true,
+    };
   }
 
   _updatePreference(String key, bool value) async {
@@ -49,16 +60,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Choose Theme', style: GoogleFonts.fredoka(color: Colors.blue[900], fontSize: 22)),
+              Text('Choose Theme',
+                  style: GoogleFonts.fredoka(
+                      color: Colors.blue[900], fontSize: 22)),
               ListTile(
-                title: Text('Light Theme', style: GoogleFonts.fredoka(color: Colors.blue[900])),
+                title: Text('Light Theme',
+                    style: GoogleFonts.fredoka(color: Colors.blue[900])),
                 onTap: () {
                   _toggleTheme(false);
                   Navigator.pop(context);
                 },
               ),
               ListTile(
-                title: Text('Dark Theme', style: GoogleFonts.fredoka(color: Colors.blue[900])),
+                title: Text('Dark Theme',
+                    style: GoogleFonts.fredoka(color: Colors.blue[900])),
                 onTap: () {
                   _toggleTheme(true);
                   Navigator.pop(context);
@@ -73,10 +88,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
     return Scaffold(
       appBar: AppBar(
-        title: Text('Settings', style: GoogleFonts.fredoka(fontSize: 22)), // Use a different font
-        backgroundColor: Colors.deepPurple, // Gradient start color
+        title: Text('Settings', style: GoogleFonts.fredoka(fontSize: 22)),
+        // Use a different font
+        backgroundColor: Colors.deepPurple,
+        // Gradient start color
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -94,7 +114,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ListTile(
               title: Text(
                 'Vibration',
-                style: GoogleFonts.fredoka(color: Colors.blue[900]),
+                style: GoogleFonts.fredoka(color: Colors.purple),
               ),
               trailing: Switch(
                 value: _isVibrationOn,
@@ -104,14 +124,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _updatePreference('isVibrationOn', value);
                   });
                 },
-                activeColor: Colors.blue[900],
+                activeColor: Colors.blueAccent,
               ),
             ),
             Divider(),
             ListTile(
               title: Text(
                 'Notifications',
-                style: GoogleFonts.fredoka(color: Colors.blue[900]),
+                style: GoogleFonts.fredoka(color: Colors.purple),
               ),
               trailing: Switch(
                 value: _isNotificationsOn,
@@ -121,16 +141,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _updatePreference('isNotificationsOn', value);
                   });
                 },
-                activeColor: Colors.blue[900],
+                activeColor: Colors.blueAccent,
               ),
             ),
             Divider(),
             ListTile(
               title: Text(
                 'Change Theme',
-                style: GoogleFonts.fredoka(color: Colors.blue[900]),
+                style: GoogleFonts.fredoka(color: Colors.purple),
               ),
-              trailing: Icon(Icons.color_lens, color: Colors.blue[900]),
+              trailing: Icon(Icons.color_lens, color: Colors.blueAccent),
               onTap: () {
                 _showThemeBottomSheet(context);
               },
@@ -140,7 +160,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onPressed: () {
                 //TODO: Add functionality for resetting data
               },
-              child: Text('Reset Data', style: GoogleFonts.fredoka(color: Colors.white)),
+              child: Text('Reset Data',
+                  style: GoogleFonts.fredoka(color: Colors.white)),
               style: ElevatedButton.styleFrom(
                 primary: Colors.blue[700],
                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
