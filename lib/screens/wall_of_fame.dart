@@ -347,7 +347,7 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
         child: Scaffold(
           appBar: AppBar(
             title:
-                Text('Wall of Fame', style: GoogleFonts.fredoka(fontSize: 22)),
+                Text('Wall of Fame (Endless)', style: GoogleFonts.fredoka(fontSize: 22)),
             // Use a different font
             backgroundColor: Colors.deepPurple,
             // Gradient start color
