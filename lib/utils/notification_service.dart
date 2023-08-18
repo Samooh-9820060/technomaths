@@ -21,7 +21,7 @@ class NotificationService {
   Future<void> startRecurringTask() async {
     final int alarmId = 0;
     await AndroidAlarmManager.periodic(
-        const Duration(hours: 8),
+        const Duration(minutes: 1),
         alarmId,
         scheduleDynamicNotification,
     );

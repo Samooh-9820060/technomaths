@@ -17,6 +17,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.2"
+  android_intent_plus:
+    dependency: "direct main"
+    description:
+      name: android_intent_plus
+      sha256: f72ae20bb37108694f442e7ae6acbd28b453ca62ce86842f6787b784355abfe6
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.0.2"
   args:
     dependency: transitive
     description:
@@ -360,6 +368,30 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.5.0"
+  notification_permissions:
+    dependency: "direct main"
+    description:
+      name: notification_permissions
+      sha256: e62e7fbd4b64941764778fc957224567aff10cdc8b0227046bd0a4b9db7b47a6
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.6.1"
+  package_info_plus:
+    dependency: "direct main"
+    description:
+      name: package_info_plus
+      sha256: "6ff267fcd9d48cb61c8df74a82680e8b82e940231bb5f68356672fde0397334a"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.1.0"
+  package_info_plus_platform_interface:
+    dependency: transitive
+    description:
+      name: package_info_plus_platform_interface
+      sha256: "9bc8ba46813a4cc42c66ab781470711781940780fd8beddd0c3da62506d3a6c6"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.1"
   path:
     dependency: transitive
     description:
