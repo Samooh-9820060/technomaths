@@ -169,7 +169,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
             Divider(),
-            ListTile(
+            /*ListTile(
               title: Text(
                 'Change Theme',
                 style: GoogleFonts.fredoka(color: Colors.purple),
@@ -191,7 +191,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 minimumSize: Size(MediaQuery.of(context).size.width * 0.4, 50),
               ),
-            ),
+            ),*/
           ],
         ),
       ),

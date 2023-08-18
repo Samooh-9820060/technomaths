@@ -48,12 +48,11 @@ class HomeScreen extends StatelessWidget {
               //AnimatedButton('Levels', onPressed: () {
                 // Code to go to the levels
               //}),
-              AnimatedButton('Test Button', onPressed: () async {
+              /*AnimatedButton('Test Button', onPressed: () async {
                 //await devUseMethods.addMessagesInBulk();
                 final notificationService = NotificationService();
                 await notificationService.initialize();
-
-              }),
+              }),*/
               AnimatedButton('Settings', onPressed: () async {
                 await performVibration();
                 // Settings code
