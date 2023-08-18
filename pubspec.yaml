@@ -46,6 +46,7 @@ dependencies:
   device_info_plus: ^9.0.3
   uuid: ^3.0.7
   pull_to_refresh: ^2.0.0
+  font_awesome_flutter: ^10.5.0
 
 dev_dependencies:
   flutter_test:

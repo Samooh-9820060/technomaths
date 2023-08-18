@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';  // import this
+import 'package:technomaths/screens/wall_of_fame.dart';
 import 'package:technomaths/utils/commonFunctions.dart';
 import 'package:technomaths/widgets/animated_buttons.dart';
 import 'package:technomaths/screens/game_screen.dart';
@@ -36,6 +38,22 @@ class EndlessModeScreen extends StatelessWidget {
             );
           },
         ),
+        actions: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 10.0), // Adjust the horizontal padding as needed
+            child: IconButton(
+              icon: FaIcon(FontAwesomeIcons.trophy, color: Colors.blueAccent, size: 30),
+              onPressed: () async {
+                await performVibration();
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => WallOfFameScreen(
+                    gameMode: GameMode.Addition,
+                  ),
+                ));
+              },
+            ),
+          )
+        ],
       ),
       body: Center(
         child: Column(

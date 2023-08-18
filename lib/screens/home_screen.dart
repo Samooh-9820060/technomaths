@@ -42,13 +42,13 @@ class HomeScreen extends StatelessWidget {
               //AnimatedButton('Levels', onPressed: () {
                 // Code to go to the levels
               //}),
-              AnimatedButton('Wall of Fame', onPressed: () async {
+              /*AnimatedButton('Wall of Fame', onPressed: () async {
                 await performVibration();
                 Navigator.of(context).push(MaterialPageRoute(
                     builder: (context) => WallOfFameScreen(
                       gameMode: GameMode.Addition,
                     )));
-              }),
+              }),*/
               /*AnimatedButton('Settings', onPressed: () async {
                 await performVibration();
                 // Settings code
