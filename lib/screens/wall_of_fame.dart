@@ -602,9 +602,9 @@ class _DataTableSource extends DataTableSource {
     return DataRow(
       cells: [
         DataCell(Center(child: Text((index + 1).toString()))),
-        DataCell(Expanded(child: Center(child: Text(scores[index]['name'])))),
-        DataCell(Expanded(child: Center(child: Text(scores[index]['score'].toString())))),
-        DataCell(Expanded(child: Center(child: Text(scores[index]['timeElapsed'])))),
+        DataCell(Center(child: Text(scores[index]['name']))),
+        DataCell(Center(child: Text(scores[index]['score'].toString()))),
+        DataCell(Center(child: Text(scores[index]['timeElapsed']))),
       ],
     );
   }
