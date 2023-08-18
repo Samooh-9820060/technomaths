@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:technomaths/utils/commonFunctions.dart';
 
 class SettingsScreen extends StatefulWidget {
   @override
@@ -38,15 +39,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     };
   }
 
-  _updatePreference(String key, bool value) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setBool(key, value);
-  }
-
   _toggleTheme(bool isDark) {
     setState(() {
       //_isDarkTheme = isDark;
-      _updatePreference('isDarkTheme', isDark);
+      commonFunctions.updatePreference('isDarkTheme', isDark);
       // TODO: You can also update your app's theme here
     });
   }
@@ -121,7 +117,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 onChanged: (bool value) {
                   setState(() {
                     _isVibrationOn = value;
-                    _updatePreference('isVibrationOn', value);
+                    commonFunctions.updatePreference('isVibrationOn', value);
                   });
                 },
                 activeColor: Colors.blueAccent,
@@ -138,7 +134,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 onChanged: (bool value) {
                   setState(() {
                     _isNotificationsOn = value;
-                    _updatePreference('isNotificationsOn', value);
+                    commonFunctions.updatePreference('isNotificationsOn', value);
                   });
                 },
                 activeColor: Colors.blueAccent,
