@@ -1,6 +1,11 @@
+import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:notification_permissions/notification_permissions.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:technomaths/utils/commonFunctions.dart';
 
 class SettingsScreen extends StatefulWidget {
   @override
@@ -10,32 +15,38 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _isVibrationOn = true;
   bool _isNotificationsOn = true;
+
   //bool _isDarkTheme = true;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadPreferences();
+    _loadInitialPreferences();
   }
 
-  _loadPreferences() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
+  _loadInitialPreferences() async {
+    var preferences = await _loadPreferences();
     setState(() {
-      _isVibrationOn = prefs.getBool('isVibrationOn') ?? true;
-      _isNotificationsOn = prefs.getBool('isNotificationsOn') ?? true;
-      //_isDarkTheme = prefs.getBool('isDarkTheme') ?? true;
+      _isVibrationOn = preferences['isVibrationOn']!;
+      _isNotificationsOn = preferences['isNotificationsOn']!;
+      _isLoading = false;
     });
   }
 
-  _updatePreference(String key, bool value) async {
+  Future<Map<String, bool>> _loadPreferences() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setBool(key, value);
+    return {
+      'isVibrationOn': prefs.getBool('isVibrationOn') ?? true,
+      'isNotificationsOn': prefs.getBool('isNotificationsOn') ?? true,
+      //'isDarkTheme': prefs.getBool('isDarkTheme') ?? true,
+    };
   }
 
   _toggleTheme(bool isDark) {
     setState(() {
       //_isDarkTheme = isDark;
-      _updatePreference('isDarkTheme', isDark);
+      commonFunctions.updatePreference('isDarkTheme', isDark);
       // TODO: You can also update your app's theme here
     });
   }
@@ -49,16 +60,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Choose Theme', style: GoogleFonts.fredoka(color: Colors.blue[900], fontSize: 22)),
+              Text('Choose Theme',
+                  style: GoogleFonts.fredoka(
+                      color: Colors.blue[900], fontSize: 22)),
               ListTile(
-                title: Text('Light Theme', style: GoogleFonts.fredoka(color: Colors.blue[900])),
+                title: Text('Light Theme',
+                    style: GoogleFonts.fredoka(color: Colors.blue[900])),
                 onTap: () {
                   _toggleTheme(false);
                   Navigator.pop(context);
                 },
               ),
               ListTile(
-                title: Text('Dark Theme', style: GoogleFonts.fredoka(color: Colors.blue[900])),
+                title: Text('Dark Theme',
+                    style: GoogleFonts.fredoka(color: Colors.blue[900])),
                 onTap: () {
                   _toggleTheme(true);
                   Navigator.pop(context);
@@ -73,10 +88,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
     return Scaffold(
       appBar: AppBar(
-        title: Text('Settings', style: GoogleFonts.fredoka(fontSize: 22)), // Use a different font
-        backgroundColor: Colors.deepPurple, // Gradient start color
+        title: Text('Settings', style: GoogleFonts.fredoka(fontSize: 22)),
+        // Use a different font
+        backgroundColor: Colors.deepPurple,
+        // Gradient start color
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -94,43 +114,67 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ListTile(
               title: Text(
                 'Vibration',
-                style: GoogleFonts.fredoka(color: Colors.blue[900]),
+                style: GoogleFonts.fredoka(color: Colors.purple),
               ),
               trailing: Switch(
                 value: _isVibrationOn,
                 onChanged: (bool value) {
                   setState(() {
                     _isVibrationOn = value;
-                    _updatePreference('isVibrationOn', value);
+                    commonFunctions.updatePreference('isVibrationOn', value);
                   });
                 },
-                activeColor: Colors.blue[900],
+                activeColor: Colors.blueAccent,
               ),
             ),
             Divider(),
             ListTile(
               title: Text(
                 'Notifications',
-                style: GoogleFonts.fredoka(color: Colors.blue[900]),
+                style: GoogleFonts.fredoka(color: Colors.purple),
               ),
               trailing: Switch(
                 value: _isNotificationsOn,
-                onChanged: (bool value) {
-                  setState(() {
-                    _isNotificationsOn = value;
-                    _updatePreference('isNotificationsOn', value);
-                  });
+                onChanged: (bool value) async {
+                  if (!value) {
+                    // If user is trying to switch off, just update the preference.
+                    setState(() {
+                      _isNotificationsOn = value;
+                    });
+                    commonFunctions.updatePreference('isNotificationsOn', value);
+                  } else {
+                    // If user is trying to switch on, check if permissions are granted.
+                    var permissionStatus = await NotificationPermissions.getNotificationPermissionStatus();
+                    if (permissionStatus != PermissionStatus.granted) {
+                      PackageInfo packageInfo = await PackageInfo.fromPlatform();
+                      String packageName = packageInfo.packageName;
+
+                      // If permissions are not granted, open app settings.
+                      final intent = AndroidIntent(
+                        action: 'android.settings.APPLICATION_DETAILS_SETTINGS',
+                        data: 'package:$packageName',
+                        package: 'com.android.settings',
+                      );
+                      await intent.launch();
+
+                    } else {
+                      setState(() {
+                        _isNotificationsOn = value;
+                      });
+                      commonFunctions.updatePreference('isNotificationsOn', value);
+                    }
+                  }
                 },
-                activeColor: Colors.blue[900],
+                activeColor: Colors.blueAccent,
               ),
             ),
             Divider(),
-            ListTile(
+            /*ListTile(
               title: Text(
                 'Change Theme',
-                style: GoogleFonts.fredoka(color: Colors.blue[900]),
+                style: GoogleFonts.fredoka(color: Colors.purple),
               ),
-              trailing: Icon(Icons.color_lens, color: Colors.blue[900]),
+              trailing: Icon(Icons.color_lens, color: Colors.blueAccent),
               onTap: () {
                 _showThemeBottomSheet(context);
               },
@@ -140,13 +184,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onPressed: () {
                 //TODO: Add functionality for resetting data
               },
-              child: Text('Reset Data', style: GoogleFonts.fredoka(color: Colors.white)),
+              child: Text('Reset Data',
+                  style: GoogleFonts.fredoka(color: Colors.white)),
               style: ElevatedButton.styleFrom(
                 primary: Colors.blue[700],
                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 minimumSize: Size(MediaQuery.of(context).size.width * 0.4, 50),
               ),
-            ),
+            ),*/
           ],
         ),
       ),

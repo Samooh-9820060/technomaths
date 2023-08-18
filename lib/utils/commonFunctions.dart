@@ -1,7 +1,7 @@
 import 'dart:io';
-
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
+import 'package:notification_permissions/notification_permissions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
@@ -40,6 +40,22 @@ class commonFunctions {
     }
   }
 
+  static int convertTimeStringToSeconds(String time) {
+    List<String> parts = time.split(':');
+    if (parts.length != 2) return 0;
+
+    int minutes = int.tryParse(parts[0]) ?? 0;
+    int seconds = int.tryParse(parts[1]) ?? 0;
+
+    return minutes * 60 + seconds;
+  }
+  static String convertSecondsToTimeString(int totalSeconds) {
+    int minutes = totalSeconds ~/ 60;
+    int seconds = totalSeconds % 60;
+
+    return "${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}";
+  }
+
   static Future<bool> checkVibrationSupport() async {
     //check if vibration is enabled from settings
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -59,4 +75,60 @@ class commonFunctions {
     }
     return adUnitIds[adType]?[currentPlatform] ?? 'default_ad_unit_id';
   }
+
+  static String processDynamicParts(String text, int scoreInt, int rankInt) {
+    // Pattern for {variable+number} or {variable-number}
+    final regex = RegExp(r'\{(\w+)([+-]\d+)\}');
+
+    return text.replaceAllMapped(regex, (match) {
+      String variable = match.group(1)!;
+      String operation = match.group(2)!;
+
+      int baseValue;
+      if (variable == "rank") {
+        baseValue = rankInt;
+      } else if (variable == "score") {
+        baseValue = scoreInt;
+      } else {
+        // Unknown variable; return the original string
+        return match.group(0)!;
+      }
+
+      int offset = int.parse(operation); // this will be positive for "+n" and negative for "-n"
+      return (baseValue + offset).toString();
+    });
+  }
+
+
+
+  //get set shared preferences
+  static Future<bool> isNotificationAllowed() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('isNotificationsOn') ?? true;  // default to true if not set
+  }
+  static updatePreference(String key, bool value) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setBool(key, value);
+  }
+  static Future<void> setDefaultPreferences() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bool? isFirstRun = prefs.getBool('isFirstRun');
+
+    // Check if notifications are permitted
+    var permissionStatus = await NotificationPermissions.getNotificationPermissionStatus();
+    bool areNotificationsPermitted = (permissionStatus == PermissionStatus.granted);
+
+    if (!areNotificationsPermitted) {
+      await prefs.setBool('isNotificationsOn', areNotificationsPermitted);
+    }
+
+    if (isFirstRun == null || isFirstRun) {
+      await prefs.setBool('isVibrationOn', true);
+      await prefs.setBool('isNotificationsOn', areNotificationsPermitted);
+      // await prefs.setBool('isDarkTheme', true); // Uncomment this if you need it
+      await prefs.setBool('isFirstRun', false);
+    }
+  }
+
+
 }
