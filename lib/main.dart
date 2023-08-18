@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:technomaths/screens/home_screen.dart';
 
@@ -8,6 +9,7 @@ void main() async {
   await Firebase.initializeApp();
   MobileAds.instance.initialize();
   runApp(const MyApp());
+  //debugPaintSizeEnabled = true;
 }
 
 class MyApp extends StatelessWidget {
@@ -23,6 +25,7 @@ class MyApp extends StatelessWidget {
       ),
       home: const HomeScreen(),
       debugShowCheckedModeBanner: false,
+
     );
   }
 }
