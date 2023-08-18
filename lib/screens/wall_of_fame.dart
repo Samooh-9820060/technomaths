@@ -91,21 +91,6 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
       }
     }
   }
-  int convertTimeStringToSeconds(String time) {
-    List<String> parts = time.split(':');
-    if (parts.length != 2) return 0;
-
-    int minutes = int.tryParse(parts[0]) ?? 0;
-    int seconds = int.tryParse(parts[1]) ?? 0;
-
-    return minutes * 60 + seconds;
-  }
-  String convertSecondsToTimeString(int totalSeconds) {
-    int minutes = totalSeconds ~/ 60;
-    int seconds = totalSeconds % 60;
-
-    return "${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}";
-  }
 
   void _createInterstitialAd() {
     InterstitialAd.load(
@@ -260,7 +245,7 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
 
         String? timeElapsedString = data['timeElapsed'] as String?;
         if (timeElapsedString != null) {
-          int timeElapsedInSeconds = convertTimeStringToSeconds(timeElapsedString);
+          int timeElapsedInSeconds = commonFunctions.convertTimeStringToSeconds(timeElapsedString);
           bestScoreRank = await getRankForScore(bestScore, timeElapsedInSeconds);
         } else {
           // handle the case where timeElapsed is null
@@ -288,7 +273,7 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
         .collection('endlessModeGameData')
         .where('gameMode', isEqualTo: selectedMode.toString())
         .where('score', isEqualTo: score)
-        .where('timeElapsed', isLessThanOrEqualTo: convertSecondsToTimeString(timeElapsedInSeconds))
+        .where('timeElapsed', isLessThanOrEqualTo: commonFunctions.convertSecondsToTimeString(timeElapsedInSeconds))
         .count()
         .get();
 
@@ -297,7 +282,7 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
         .collection('endlessModeGameData')
         .where('gameMode', isEqualTo: selectedMode.toString())
         .where('score', isEqualTo: score)
-        .where('timeElapsed', isEqualTo: convertSecondsToTimeString(timeElapsedInSeconds))
+        .where('timeElapsed', isEqualTo: commonFunctions.convertSecondsToTimeString(timeElapsedInSeconds))
         .count()
         .get();
 

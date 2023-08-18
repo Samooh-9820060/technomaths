@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "860003862254",
+    "project_id": "technomaths-debug",
+    "storage_bucket": "technomaths-debug.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:860003862254:android:f7a8e4566a0e0e4841d5ff",
+        "android_client_info": {
+          "package_name": "com.techNova.technomaths.technomaths.debug"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "860003862254-3105ovnhe9ui5lrvfa14ag1t1olfbidh.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBBfSBZ949SksGsTpvZaJdSFi7cM0dI9R8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "860003862254-3105ovnhe9ui5lrvfa14ag1t1olfbidh.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
