@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:technomaths/utils/commonFunctions.dart';
 import 'firestore_service.dart';
 
@@ -21,7 +20,7 @@ class NotificationService {
   Future<void> startRecurringTask() async {
     final int alarmId = 0;
     await AndroidAlarmManager.periodic(
-        const Duration(minutes: 1),
+        const Duration(hours: 8),
         alarmId,
         scheduleDynamicNotification,
     );

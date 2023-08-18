@@ -102,12 +102,12 @@ class FirestoreService {
     // Fetch a random message from Firestore's notificationMessages collection
     QuerySnapshot snapshot = await FirebaseFirestore.instance
         .collection('notificationMessages')
-        .where('index', isEqualTo: 3)
+        .where('index', isEqualTo: number)
         .limit(1)
         .get();
 
     if (snapshot.docs.isEmpty) {
-      return "Hello $playerName! Play more to improve your rank in $gameMode.";
+      return "Hello $playerName! Play more and improve your rank in $gameMode.";
     }
 
     String selectedMessage = snapshot.docs.first.get('message') as String;
