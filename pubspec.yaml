@@ -50,6 +50,9 @@ dependencies:
   android_alarm_manager_plus: ^3.0.2
   flutter_local_notifications: ^15.1.0+1
   timezone: ^0.9.2
+  notification_permissions: ^0.6.1
+  android_intent_plus: ^4.0.2
+  package_info_plus: ^4.1.0
 
 dev_dependencies:
   flutter_test:

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:technomaths/screens/home_screen.dart';
+import 'package:technomaths/utils/commonFunctions.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'utils/notification_service.dart';
 
@@ -14,6 +15,7 @@ void main() async {
   await Firebase.initializeApp();
   MobileAds.instance.initialize();
 
+  commonFunctions.setDefaultPreferences();
   final notificationService = NotificationService();
   await notificationService.initialize();
 

@@ -1,5 +1,9 @@
+import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:notification_permissions/notification_permissions.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:technomaths/utils/commonFunctions.dart';
 
@@ -131,11 +135,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               trailing: Switch(
                 value: _isNotificationsOn,
-                onChanged: (bool value) {
-                  setState(() {
-                    _isNotificationsOn = value;
+                onChanged: (bool value) async {
+                  if (!value) {
+                    // If user is trying to switch off, just update the preference.
+                    setState(() {
+                      _isNotificationsOn = value;
+                    });
                     commonFunctions.updatePreference('isNotificationsOn', value);
-                  });
+                  } else {
+                    // If user is trying to switch on, check if permissions are granted.
+                    var permissionStatus = await NotificationPermissions.getNotificationPermissionStatus();
+                    if (permissionStatus != PermissionStatus.granted) {
+                      PackageInfo packageInfo = await PackageInfo.fromPlatform();
+                      String packageName = packageInfo.packageName;
+
+                      // If permissions are not granted, open app settings.
+                      final intent = AndroidIntent(
+                        action: 'android.settings.APPLICATION_DETAILS_SETTINGS',
+                        data: 'package:$packageName',
+                        package: 'com.android.settings',
+                      );
+                      await intent.launch();
+
+                    } else {
+                      setState(() {
+                        _isNotificationsOn = value;
+                      });
+                      commonFunctions.updatePreference('isNotificationsOn', value);
+                    }
+                  }
                 },
                 activeColor: Colors.blueAccent,
               ),

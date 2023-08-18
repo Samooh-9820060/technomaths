@@ -1,8 +1,7 @@
 import 'dart:io';
-import 'dart:math';
-
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
+import 'package:notification_permissions/notification_permissions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
@@ -111,5 +110,25 @@ class commonFunctions {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setBool(key, value);
   }
+  static Future<void> setDefaultPreferences() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bool? isFirstRun = prefs.getBool('isFirstRun');
+
+    // Check if notifications are permitted
+    var permissionStatus = await NotificationPermissions.getNotificationPermissionStatus();
+    bool areNotificationsPermitted = (permissionStatus == PermissionStatus.granted);
+
+    if (!areNotificationsPermitted) {
+      await prefs.setBool('isNotificationsOn', areNotificationsPermitted);
+    }
+
+    if (isFirstRun == null || isFirstRun) {
+      await prefs.setBool('isVibrationOn', true);
+      await prefs.setBool('isNotificationsOn', areNotificationsPermitted);
+      // await prefs.setBool('isDarkTheme', true); // Uncomment this if you need it
+      await prefs.setBool('isFirstRun', false);
+    }
+  }
+
 
 }
