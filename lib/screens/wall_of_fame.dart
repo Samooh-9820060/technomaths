@@ -400,6 +400,11 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
 
   Widget _buildScoreList(
       List<Map<String, dynamic>> scores, GameMode mode, String tabType) {
+
+    //define screen widths
+    double screenWidth = MediaQuery.of(context).size.width;
+    
+
     return FutureBuilder(
         // Delay for 2 seconds
         future: Future.delayed(Duration(seconds: 2), () => scores),
@@ -414,12 +419,12 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
               margin: EdgeInsets.all(10.0),
               padding: EdgeInsets.symmetric(vertical: 20.0, horizontal: 15.0),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.9),
+                color: Colors.white.withOpacity(1),
                 borderRadius: BorderRadius.circular(15),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.2),
-                    blurRadius: 10,
+                    blurRadius: 20,
                     offset: Offset(0, 5),
                   ),
                 ],
@@ -447,115 +452,127 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
                         ],
                       ),
                     ),
-                  PaginatedDataTable(
-                    key: ValueKey(_tableKey),
-                    rowsPerPage: rowsPerPage,
-                    initialFirstRowIndex: initialRow,
-                    header: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            'Scores',
-                            style: GoogleFonts.fredoka(
-                                fontWeight: FontWeight.bold, fontSize: 24),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        SizedBox(width: 8),
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                              vertical: 5.0, horizontal: 10.0),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [Colors.deepPurple, Colors.blueAccent],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
+                  Flex(
+                    direction: Axis.horizontal,
+                    children: [Expanded(
+                      child: PaginatedDataTable(
+                        key: ValueKey(_tableKey),
+                        rowsPerPage: rowsPerPage,
+                        header: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'Scores',
+                                style: GoogleFonts.fredoka(
+                                    fontWeight: FontWeight.bold, fontSize: 24),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                            borderRadius: BorderRadius.circular(12.0),
-                          ),
-                          child: PopupMenuButton<GameMode>(
-                            onSelected: (GameMode mode) {
-                              setState(() {
-                                selectedMode = mode;
-                                initialRow = 0;
-                                _tableKey++;
-                              });
-                              _handleTabSelection();
-                            },
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  selectedMode.toString().split('.').last,
-                                  style: GoogleFonts.fredoka(
-                                      fontWeight: FontWeight.normal,
-                                      fontSize: 18,
-                                      color: Colors.white),
-                                  overflow: TextOverflow.ellipsis,
+                            SizedBox(width: 8),
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                  vertical: 5.0, horizontal: 10.0),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [Colors.deepPurple, Colors.blueAccent],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
                                 ),
-                                SizedBox(width: 8),
-                                Icon(Icons.arrow_drop_down,
-                                    color: Colors.white),
-                              ],
-                            ),
-                            itemBuilder: (BuildContext context) =>
-                                GameMode.values.map((GameMode mode) {
-                              return PopupMenuItem<GameMode>(
-                                value: mode,
+                                borderRadius: BorderRadius.circular(12.0),
+                              ),
+                              child: PopupMenuButton<GameMode>(
+                                onSelected: (GameMode mode) {
+                                  setState(() {
+                                    selectedMode = mode;
+                                    initialRow = 0;
+                                    _tableKey++;
+                                  });
+                                  _handleTabSelection();
+                                },
                                 child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Text(
-                                      mode.toString().split('.').last,
+                                      selectedMode.toString().split('.').last,
                                       style: GoogleFonts.fredoka(
                                           fontWeight: FontWeight.normal,
-                                          fontSize: 16),
+                                          fontSize: 18,
+                                          color: Colors.white),
                                       overflow: TextOverflow.ellipsis,
                                     ),
-                                    Icon(_getIconForMode(mode),
-                                        color: Colors.deepPurple),
+                                    SizedBox(width: 8),
+                                    Icon(Icons.arrow_drop_down,
+                                        color: Colors.white),
                                   ],
                                 ),
-                              );
-                            }).toList(),
-                          ),
+                                itemBuilder: (BuildContext context) =>
+                                    GameMode.values.map((GameMode mode) {
+                                  return PopupMenuItem<GameMode>(
+                                    value: mode,
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          mode.toString().split('.').last,
+                                          style: GoogleFonts.fredoka(
+                                              fontWeight: FontWeight.normal,
+                                              fontSize: 16),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        Icon(_getIconForMode(mode),
+                                            color: Colors.deepPurple),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
+                        columns: [
+                          DataColumn(
+                            label: Flexible(
+                              child: Center(
+                                  child: Text('#',
+                                      style: GoogleFonts.fredoka(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16))),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Flexible(
+                              child: Center(
+                                  child: Text('Name',
+                                      style: GoogleFonts.fredoka(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16))),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Flexible(
+                              child: Center(
+                                  child: Text('Score',
+                                      style: GoogleFonts.fredoka(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16))),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Flexible(
+                              child: Center(
+                                  child: Text('Time',
+                                      style: GoogleFonts.fredoka(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16))),
+                            ),
+                          ),
+                        ],
+                        source: _DataTableSource(
+                            filteredScores, totalCount, _loadNextPage),
+                      ),
                     ),
-                    columns: [
-                      DataColumn(
-                        label: Center(
-                            child: Text('#',
-                                style: GoogleFonts.fredoka(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18))),
-                      ),
-                      DataColumn(
-                        label: Center(
-                            child: Text('Name',
-                                style: GoogleFonts.fredoka(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18))),
-                      ),
-                      DataColumn(
-                        label: Center(
-                            child: Text('Score',
-                                style: GoogleFonts.fredoka(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18))),
-                      ),
-                      DataColumn(
-                        label: Center(
-                            child: Text('Time',
-                                style: GoogleFonts.fredoka(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18))),
-                      ),
-                    ],
-                    source: _DataTableSource(
-                        filteredScores, totalCount, _loadNextPage),
-                  ),
+                  ]),
                 ],
               ),
             ),
@@ -600,9 +617,9 @@ class _DataTableSource extends DataTableSource {
     return DataRow(
       cells: [
         DataCell(Center(child: Text((index + 1).toString()))),
-        DataCell(Center(child: Text(scores[index]['name']))),
-        DataCell(Center(child: Text(scores[index]['score'].toString()))),
-        DataCell(Center(child: Text(scores[index]['timeElapsed']))),
+        DataCell(Expanded(child: Center(child: Text(scores[index]['name'])))),
+        DataCell(Expanded(child: Center(child: Text(scores[index]['score'].toString())))),
+        DataCell(Expanded(child: Center(child: Text(scores[index]['timeElapsed'])))),
       ],
     );
   }
