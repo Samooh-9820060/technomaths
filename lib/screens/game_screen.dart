@@ -7,15 +7,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:technomaths/screens/wall_of_fame.dart';
 import 'package:technomaths/widgets/animated_buttons.dart';
 import 'package:technomaths/config/game_mode.dart';
 import 'package:technomaths/config/game_speed.dart';
+import '../config/ThemeHelper.dart';
 import '../config/ad_config.dart';
-import '../config/theme_notifier.dart';
-import '../config/themes.dart';
 import '../database/database_helper.dart';
 import '../utils/commonFunctions.dart';
 import 'endless_mode_screen.dart';
@@ -62,18 +60,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   late AnimationController _scoreController;
   late Animation<double> _scoreAnimation;
   TextEditingController _nameController = TextEditingController();
-
-  //Colors
-  late Color primaryColor;
-  late Color secondaryColor;
-  late Color errorColor;
-  late Color positiveColor;
-  late Color progressBarBackground;
-  late Color positiveColorLight;
-  late Color positiveColorDark;
-  late Color btnTextColor;
-  late Color btnTextColorReverse;
-  late Color backdropBackgroundColor;
+  late var themeColors;
 
 
   @override
@@ -162,7 +149,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
           onAdLoaded: (InterstitialAd ad) {
             _interstitialAd = ad;
             _numInterstitialLoadAttempts = 0;
-            _showInterstitialAd();
+            //_showInterstitialAd();
           },
           onAdFailedToLoad: (LoadAdError error) {
             _interstitialAd = null;
@@ -426,7 +413,8 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     } else {
       setState(() {
         lives--;
-        _backgroundColor = errorColor;
+        print(themeColors.errorColor);
+        _backgroundColor = themeColors.errorColor;
       });
 
 
@@ -615,16 +603,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   @override
   Widget build(BuildContext context) {
 
-    primaryColor = themes[Provider.of<ThemeNotifier>(context).currentThemeKey]!.themeData.colorScheme.primary;
-    secondaryColor = themes[Provider.of<ThemeNotifier>(context).currentThemeKey]!.themeData.colorScheme.secondary;
-    errorColor = themes[Provider.of<ThemeNotifier>(context).currentThemeKey]!.errorColor;
-    positiveColor = themes[Provider.of<ThemeNotifier>(context).currentThemeKey]!.positiveColor;
-    progressBarBackground = themes[Provider.of<ThemeNotifier>(context).currentThemeKey]!.progressBarBackground;
-    positiveColorLight = themes[Provider.of<ThemeNotifier>(context).currentThemeKey]!.positiveColorLight;
-    positiveColorDark = themes[Provider.of<ThemeNotifier>(context).currentThemeKey]!.positiveColorDark;
-    btnTextColor = themes[Provider.of<ThemeNotifier>(context).currentThemeKey]!.btnTextColor;
-    btnTextColorReverse = themes[Provider.of<ThemeNotifier>(context).currentThemeKey]!.btnTextColorReverse;
-    backdropBackgroundColor = themes[Provider.of<ThemeNotifier>(context).currentThemeKey]!.backdropBackgroundColor;
+    themeColors = ThemeHelper(context, listen: false);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -632,7 +611,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: secondaryColor, size: 30),
+          icon: Icon(Icons.arrow_back, color: themeColors.iconColor, size: 30),
           onPressed: () => Navigator.pop(context),
         ),
       ) : null,
@@ -659,7 +638,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                                 child: Text(
                                   'Time: ${getReadableTime(totalTime)}',
                                   style: GoogleFonts.aBeeZee(
-                                    color: secondaryColor,
+                                    color: themeColors.textColor,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 20,
                                   ),
@@ -679,8 +658,8 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                                     return LinearProgressIndicator(
                                       value: value,
                                       minHeight: 30, // Increase height of progress bar
-                                      backgroundColor: progressBarBackground,
-                                      valueColor: AlwaysStoppedAnimation<Color>(secondaryColor),
+                                      backgroundColor: themeColors.progressBarBackground,
+                                      valueColor: AlwaysStoppedAnimation<Color>(themeColors.secondaryColor),
                                     );
                                   },
                                 ),
@@ -691,28 +670,28 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                           const SizedBox(height: 30),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children: List.generate(lives, (index) => Icon(Icons.favorite, color: errorColor, size: 40)).toList(),
+                            children: List.generate(lives, (index) => Icon(Icons.favorite, color: themeColors.errorColor, size: 40)).toList(),
                           ),
                           const SizedBox(height: 30),
                           Center(
                             child: Text(
                               'Score: $score',
-                              style: GoogleFonts.fredoka(color: secondaryColor, fontSize: 32),
+                              style: GoogleFonts.fredoka(color: themeColors.textColor, fontSize: 32),
                             ),
                           ),
                           // Animated score pop-up
-                          FadeTransition(
+                            FadeTransition(
                             opacity: _scoreAnimation,
                             child: Text(
                               '+1',
-                              style: GoogleFonts.fredoka(color: positiveColor, fontSize: 32),
+                              style: GoogleFonts.fredoka(color: themeColors.positiveColor, fontSize: 32),
                             ),
                           ),
 
                           SizedBox(height: 30),
                           Text(
                             question.contains('÷') ? formatDecimal(question) : question,  // check if division is present in the question
-                            style: GoogleFonts.fredoka(fontSize: 50, color: secondaryColor),
+                            style: GoogleFonts.fredoka(fontSize: 50, color: themeColors.textColor),
                           ),
 
                           SizedBox(height: 30),
@@ -742,7 +721,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
               BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
                 child: Container(
-                  color: backdropBackgroundColor.withOpacity(0.4),
+                  color: themeColors.backdropBackgroundColor.withOpacity(0.4),
                 ),
               ),
               Center(
@@ -760,30 +739,22 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: <Widget>[
-                            Text('Game Over', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: errorColor, fontSize: 32)),
+                            Text('Game Over', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: themeColors.errorColor, fontSize: 32)),
                             SizedBox(height: 20),
                             Text('Your Name', textAlign: TextAlign.center,),
                             SizedBox(height: 10),
                             Container(
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(12.0),
-                                border: Border.all(color: secondaryColor, width: 2.0),
-                                color: _nameController.text.isEmpty ? errorColor : progressBarBackground,  // Check here
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: progressBarBackground.withOpacity(0.5),
-                                    spreadRadius: 2,
-                                    blurRadius: 5,
-                                    offset: Offset(0, 3),
-                                  ),
-                                ],
+                                border: Border.all(color: themeColors.primaryColor, width: 2.0),
+                                color: _nameController.text.isEmpty ? themeColors.errorColor : themeColors.tableSurroundColor,  // Check here
                               ),
                               child: TextField(
                                 controller: _nameController,
                                 textAlign: TextAlign.center,
-                                style: TextStyle(fontSize: 15, color: btnTextColorReverse),
+                                style: TextStyle(fontSize: 20, color: themeColors.textColor),
                                 decoration: InputDecoration(
-                                  hintText: 'Enter your name',
+                                  hintText: 'Name',
                                   border: InputBorder.none,
                                   contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                                 ),
@@ -794,9 +765,9 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                               ),
                             ),
                             SizedBox(height: 20),
-                            Text('Your Score: $score', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: secondaryColor, fontSize: 24)),
+                            Text('Your Score: $score', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: themeColors.textColor, fontSize: 24)),
                             SizedBox(height: 20),
-                            Text('Best Score: $highestScore', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: secondaryColor, fontSize: 24)),
+                            Text('Best Score: $highestScore', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: themeColors.textColor, fontSize: 24)),
                             SizedBox(height: 30),
                             if (canRevive == true && _rewardedAd != null && dataSaved == 0) ...[
                               Material(
@@ -806,8 +777,8 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
                                       colors: [
-                                        positiveColorLight,
-                                        positiveColorDark,
+                                        themeColors.positiveColorLight,
+                                        themeColors.positiveColorDark,
                                       ],
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
@@ -824,12 +795,12 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                                       child: Row(
                                         mainAxisAlignment: MainAxisAlignment.center,
                                         children: [
-                                          Icon(Icons.play_arrow, color: btnTextColor, size: 24),
+                                          Icon(Icons.play_arrow, color: themeColors.btnTextColor, size: 24),
                                           SizedBox(width: 10),
                                           Text(
                                             'Revive',
                                             style: GoogleFonts.fredoka(
-                                              color: btnTextColor,
+                                              color: themeColors.btnTextColor,
                                               fontSize: 18,
                                             ),
                                           ),
