@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:technomaths/config/ThemeHelper.dart';
 import 'package:technomaths/config/extended_theme.dart';
 import 'package:technomaths/screens/settings.dart';
 import 'package:technomaths/utils/commonFunctions.dart';
@@ -25,8 +26,7 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color headingColor = themes[Provider.of<ThemeNotifier>(context).currentThemeKey]!.themeData.colorScheme.secondary;
-
+    final themeColors = ThemeHelper(context);
     return Scaffold(
       body: Container(
         child: Center(
@@ -35,7 +35,7 @@ class HomeScreen extends StatelessWidget {
             children: <Widget>[
               Text(
                 'TechnoMaths',
-                style: GoogleFonts.fredoka(fontSize: 40, color: headingColor),
+                style: GoogleFonts.fredoka(fontSize: 40, color: themeColors.headerColor),
               ),
               SizedBox(height: 50), // Add this for extra space
               AnimatedButton('Endless', onPressed: () async {

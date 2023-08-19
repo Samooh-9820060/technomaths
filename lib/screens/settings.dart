@@ -1,13 +1,12 @@
 import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:notification_permissions/notification_permissions.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:technomaths/utils/commonFunctions.dart';
-
+import '../config/ThemeHelper.dart';
 import '../config/theme_notifier.dart';
 import '../config/themes.dart';
 
@@ -21,6 +20,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _isNotificationsOn = true;
   String _appTheme = 'light';
   bool _isLoading = true;
+  late var themeColors;
 
   @override
   void initState() {
@@ -70,16 +70,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Text(
                 'Choose Theme',
                 style: GoogleFonts.fredoka(
-                    color: Colors.blueAccent, fontSize: 22),
+                    color: themeColors.textColor, fontSize: 22),
               ),
               ...themes.keys.map((themeKey) {
                 return ListTile(
                   trailing: _appTheme == themeKey
-                      ? Icon(Icons.check, color: Colors.blueAccent)
+                      ? Icon(Icons.check, color: themeColors.textColor)
                       : null,
                   title: Text(
                     themeKey[0].toUpperCase() + themeKey.substring(1) + ' Theme',
-                    style: GoogleFonts.fredoka(color: Colors.blueAccent),
+                    style: GoogleFonts.fredoka(color: themeColors.textColor),
                   ),
                   onTap: () {
                     _setAppTheme(themeKey);
@@ -97,6 +97,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+
+    themeColors = ThemeHelper(context, listen: false);
+
     if (_isLoading) {
       return Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -104,14 +107,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
       appBar: AppBar(
         title: Text('Settings', style: GoogleFonts.fredoka(fontSize: 22)),
         // Use a different font
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: themeColors.primaryColor,
         // Gradient start color
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Colors.deepPurple, Colors.blueAccent],
+              colors: [themeColors.primaryColor, themeColors.secondaryColor],
             ),
           ),
         ),
@@ -123,7 +126,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ListTile(
               title: Text(
                 'Vibration',
-                style: GoogleFonts.fredoka(color: Colors.purple),
+                style: GoogleFonts.fredoka(color: themeColors.textColor),
               ),
               trailing: Switch(
                 value: _isVibrationOn,
@@ -133,14 +136,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     commonFunctions.updatePreference('isVibrationOn', value);
                   });
                 },
-                activeColor: Colors.blueAccent,
+                activeColor: themeColors.iconColor,
               ),
             ),
             Divider(),
             ListTile(
               title: Text(
                 'Notifications',
-                style: GoogleFonts.fredoka(color: Colors.purple),
+                style: GoogleFonts.fredoka(color: themeColors.textColor),
               ),
               trailing: Switch(
                 value: _isNotificationsOn,
@@ -174,16 +177,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     }
                   }
                 },
-                activeColor: Colors.blueAccent,
+                activeColor: themeColors.iconColor,
               ),
             ),
             Divider(),
             ListTile(
               title: Text(
                 'Change Theme',
-                style: GoogleFonts.fredoka(color: Colors.purple),
+                style: GoogleFonts.fredoka(color: themeColors.textColor),
               ),
-              trailing: Icon(Icons.color_lens, color: Colors.blueAccent),
+              trailing: Icon(Icons.color_lens, color: themeColors.iconColor),
               onTap: () {
                 _showThemeBottomSheet(context);
               },
