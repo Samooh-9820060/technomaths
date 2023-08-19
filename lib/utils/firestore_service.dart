@@ -74,7 +74,7 @@ class FirestoreService {
     return rank;
   }
 
-  static Future<String> generateMessage(String gameMode, String score, String rank) async {
+  static Future<Map<String, String>> generateMessage(String gameMode, String score, String rank) async {
     // Fetch player's name from Shared Preferences
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final String playerName = prefs.getString('playerName') ?? 'Player';
@@ -92,8 +92,10 @@ class FirestoreService {
 
     // If no messages are found, return a default message
     if (totalCount == 0) {
-      return "Hello $playerName! Play more to improve your rank in $gameMode.";
-    }
+      return {
+        "message": "Hello $playerName! Play more and improve your rank in $gameMode.",
+        "documentId": "" // No document ID in this case
+      };    }
 
     // Get a random skip value
     Random rand = Random();
@@ -107,10 +109,16 @@ class FirestoreService {
         .get();
 
     if (snapshot.docs.isEmpty) {
-      return "Hello $playerName! Play more and improve your rank in $gameMode.";
+      return {
+        "message": "Hello $playerName! Play more and improve your rank in $gameMode.",
+        "documentId": "" // No document ID in this case
+      };
     }
 
+
     String selectedMessage = snapshot.docs.first.get('message') as String;
+    String documentId = snapshot.docs.first.id;
+
     selectedMessage = selectedMessage
         .replaceAll("{playerName}", playerName)
         .replaceAll("{gameMode}", gameMode)
@@ -119,6 +127,18 @@ class FirestoreService {
 
     selectedMessage = commonFunctions.processDynamicParts(selectedMessage, scoreInt, rankInt);
 
-    return selectedMessage;
+    return {
+      "message": selectedMessage,
+      "documentId": documentId
+    };
   }
+
+  Future<void> updateClickCount(String documentId) async {
+    final docRef = FirebaseFirestore.instance.collection('notificationMessages').doc(documentId);
+
+    await docRef.update({
+      'clickCount': FieldValue.increment(1)
+    });
+  }
+
 }
