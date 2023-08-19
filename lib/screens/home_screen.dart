@@ -1,19 +1,18 @@
-import 'dart:isolate';
-
-import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:technomaths/config/game_mode.dart';
+import 'package:provider/provider.dart';
+import 'package:technomaths/config/ThemeHelper.dart';
+import 'package:technomaths/config/extended_theme.dart';
 import 'package:technomaths/screens/settings.dart';
-import 'package:technomaths/screens/wall_of_fame.dart';
 import 'package:technomaths/utils/commonFunctions.dart';
-import 'package:technomaths/utils/devUseMethods.dart';
 import 'package:technomaths/widgets/animated_buttons.dart';
 import 'package:flutter/services.dart';
 import 'package:technomaths/screens/endless_mode_screen.dart';
+import 'package:technomaths/config/extended_theme.dart';
 
-import '../utils/notification_service.dart';
+import '../config/theme_notifier.dart';
+import '../config/themes.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -27,6 +26,7 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeColors = ThemeHelper(context);
     return Scaffold(
       body: Container(
         child: Center(
@@ -35,7 +35,7 @@ class HomeScreen extends StatelessWidget {
             children: <Widget>[
               Text(
                 'TechnoMaths',
-                style: GoogleFonts.fredoka(fontSize: 40, color: Colors.blueAccent),
+                style: GoogleFonts.fredoka(fontSize: 40, color: themeColors.headerColor),
               ),
               SizedBox(height: 50), // Add this for extra space
               AnimatedButton('Endless', onPressed: () async {

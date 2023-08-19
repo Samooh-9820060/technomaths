@@ -1,11 +1,14 @@
 import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:notification_permissions/notification_permissions.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:technomaths/utils/commonFunctions.dart';
+import '../config/ThemeHelper.dart';
+import '../config/theme_notifier.dart';
+import '../config/themes.dart';
 
 class SettingsScreen extends StatefulWidget {
   @override
@@ -15,9 +18,9 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _isVibrationOn = true;
   bool _isNotificationsOn = true;
-
-  //bool _isDarkTheme = true;
+  String _appTheme = 'light';
   bool _isLoading = true;
+  late var themeColors;
 
   @override
   void initState() {
@@ -30,26 +33,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() {
       _isVibrationOn = preferences['isVibrationOn']!;
       _isNotificationsOn = preferences['isNotificationsOn']!;
+      _appTheme = preferences['appTheme']!;
+      print(_appTheme);
       _isLoading = false;
     });
   }
 
-  Future<Map<String, bool>> _loadPreferences() async {
+  Future<Map<String, dynamic>> _loadPreferences() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return {
       'isVibrationOn': prefs.getBool('isVibrationOn') ?? true,
       'isNotificationsOn': prefs.getBool('isNotificationsOn') ?? true,
-      //'isDarkTheme': prefs.getBool('isDarkTheme') ?? true,
+      'appTheme': prefs.getString('appTheme') ?? 'light',  // Using new preference key
     };
   }
 
-  _toggleTheme(bool isDark) {
-    setState(() {
-      //_isDarkTheme = isDark;
-      commonFunctions.updatePreference('isDarkTheme', isDark);
-      // TODO: You can also update your app's theme here
-    });
-  }
+    _setAppTheme(String theme) {
+      setState(() {
+        _appTheme = theme;
+        commonFunctions.updatePreference('appTheme', theme);  // Using new preference key
+        // TODO: You can also update your app's theme here
+      });
+
+      Provider.of<ThemeNotifier>(context, listen: false).setTheme(theme);
+    }
 
   void _showThemeBottomSheet(BuildContext context) {
     showModalBottomSheet(
@@ -60,25 +67,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Choose Theme',
-                  style: GoogleFonts.fredoka(
-                      color: Colors.blue[900], fontSize: 22)),
-              ListTile(
-                title: Text('Light Theme',
-                    style: GoogleFonts.fredoka(color: Colors.blue[900])),
-                onTap: () {
-                  _toggleTheme(false);
-                  Navigator.pop(context);
-                },
+              Text(
+                'Choose Theme',
+                style: GoogleFonts.fredoka(
+                    color: themeColors.textColor, fontSize: 22),
               ),
-              ListTile(
-                title: Text('Dark Theme',
-                    style: GoogleFonts.fredoka(color: Colors.blue[900])),
-                onTap: () {
-                  _toggleTheme(true);
-                  Navigator.pop(context);
-                },
-              ),
+              ...themes.keys.map((themeKey) {
+                return ListTile(
+                  trailing: _appTheme == themeKey
+                      ? Icon(Icons.check, color: themeColors.textColor)
+                      : null,
+                  title: Text(
+                    themeKey[0].toUpperCase() + themeKey.substring(1) + ' Theme',
+                    style: GoogleFonts.fredoka(color: themeColors.textColor),
+                  ),
+                  onTap: () {
+                    _setAppTheme(themeKey);
+                    Navigator.pop(context);
+                  },
+                );
+              }).toList(),
             ],
           ),
         );
@@ -86,8 +94,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+
   @override
   Widget build(BuildContext context) {
+
+    themeColors = ThemeHelper(context, listen: false);
+
     if (_isLoading) {
       return Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -95,14 +107,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
       appBar: AppBar(
         title: Text('Settings', style: GoogleFonts.fredoka(fontSize: 22)),
         // Use a different font
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: themeColors.primaryColor,
         // Gradient start color
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Colors.deepPurple, Colors.blueAccent],
+              colors: [themeColors.primaryColor, themeColors.secondaryColor],
             ),
           ),
         ),
@@ -114,7 +126,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ListTile(
               title: Text(
                 'Vibration',
-                style: GoogleFonts.fredoka(color: Colors.purple),
+                style: GoogleFonts.fredoka(color: themeColors.textColor),
               ),
               trailing: Switch(
                 value: _isVibrationOn,
@@ -124,14 +136,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     commonFunctions.updatePreference('isVibrationOn', value);
                   });
                 },
-                activeColor: Colors.blueAccent,
+                activeColor: themeColors.iconColor,
               ),
             ),
             Divider(),
             ListTile(
               title: Text(
                 'Notifications',
-                style: GoogleFonts.fredoka(color: Colors.purple),
+                style: GoogleFonts.fredoka(color: themeColors.textColor),
               ),
               trailing: Switch(
                 value: _isNotificationsOn,
@@ -165,22 +177,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     }
                   }
                 },
-                activeColor: Colors.blueAccent,
+                activeColor: themeColors.iconColor,
               ),
             ),
             Divider(),
-            /*ListTile(
+            ListTile(
               title: Text(
                 'Change Theme',
-                style: GoogleFonts.fredoka(color: Colors.purple),
+                style: GoogleFonts.fredoka(color: themeColors.textColor),
               ),
-              trailing: Icon(Icons.color_lens, color: Colors.blueAccent),
+              trailing: Icon(Icons.color_lens, color: themeColors.iconColor),
               onTap: () {
                 _showThemeBottomSheet(context);
               },
             ),
             Divider(),
-            ElevatedButton(
+            /*ElevatedButton(
               onPressed: () {
                 //TODO: Add functionality for resetting data
               },

@@ -12,9 +12,26 @@ class NotificationService {
   Future<void> initialize() async {
     final initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
     final initializationSettings = InitializationSettings(android: initializationSettingsAndroid);
-    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+    await flutterLocalNotificationsPlugin.initialize(
+        initializationSettings,
+        onDidReceiveNotificationResponse: (NotificationResponse notificationResponse) {
+          onSelectNotification(notificationResponse.payload);
+        }
+    );
 
     startRecurringTask();
+  }
+
+  Future<void> onSelectNotification(String? payload) async {
+    if (payload == null) return;
+
+    // Initialize Firestore
+    await Firebase.initializeApp();
+
+    final firestoreService = FirestoreService();
+
+    // Fetch the document using the payload as ID and update the clickCount field
+    await firestoreService.updateClickCount(payload);
   }
 
   Future<void> startRecurringTask() async {
@@ -47,7 +64,9 @@ class NotificationService {
     String? rank = highestScores[randomGameMode]?['rank'].toString();
 
     final String title = "TechnoMaths";
-    final String body = await FirestoreService.generateMessage(randomGameMode, score!, rank!);
+    Map<String, String> result = await FirestoreService.generateMessage(randomGameMode, score!, rank!);
+    final String body = result["message"]!;
+    final String documentId = result["documentId"]!;
 
     // Notification details
     const int notificationId = 0;
@@ -67,6 +86,7 @@ class NotificationService {
       title,
       body,
       platformChannelSpecifics,
+      payload: documentId,
     );
   }
 }

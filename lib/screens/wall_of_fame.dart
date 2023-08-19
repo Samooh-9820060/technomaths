@@ -4,9 +4,13 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:provider/provider.dart';
 import 'package:technomaths/config/game_mode.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../config/ThemeHelper.dart';
+import '../config/theme_notifier.dart';
+import '../config/themes.dart';
 import '../database/database_helper.dart';
 import '../config/ad_config.dart';
 import '../utils/commonFunctions.dart';
@@ -44,6 +48,7 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
   DocumentSnapshot? lastDocumentAllTime;
 
   GameMode selectedMode = GameMode.Addition;
+  late var themeColors;
 
   //loading variables
   bool _isLoadingAllTimeNextPage = false;
@@ -327,6 +332,9 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
 
   @override
   Widget build(BuildContext context) {
+
+    themeColors = ThemeHelper(context, listen: false);
+
     return DefaultTabController(
         length: 3,
         child: Scaffold(
@@ -334,20 +342,20 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
             title:
                 Text('Wall of Fame (Endless)', style: GoogleFonts.fredoka(fontSize: 22)),
             // Use a different font
-            backgroundColor: Colors.deepPurple,
+            backgroundColor: themeColors.primaryColor,
             // Gradient start color
             flexibleSpace: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Colors.deepPurple, Colors.blueAccent],
+                  colors: [themeColors.primaryColor, themeColors.secondaryColor],
                 ),
               ),
             ),
             bottom: TabBar(
               controller: _tabController,
-              indicatorColor: Colors.yellowAccent,
+              indicatorColor: themeColors.buttonIndicatorColor,
               indicatorSize: TabBarIndicatorSize.label,
               tabs: [
                 Tab(icon: Icon(Icons.home), text: 'Local'),
@@ -362,8 +370,8 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
                 begin: Alignment.topRight,
                 end: Alignment.bottomLeft,
                 colors: [
-                  Colors.blueAccent.withOpacity(0.2),
-                  Colors.deepPurple.withOpacity(0.2)
+                  themeColors.secondaryColor.withOpacity(0.2),
+                  themeColors.primaryColor.withOpacity(0.2),
                 ],
               ),
             ),
@@ -380,7 +388,8 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
               ],
             ),
           ),
-        ));
+        )
+    );
   }
 
   Widget _buildScoreList(
@@ -404,11 +413,11 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
               margin: EdgeInsets.all(10.0),
               padding: EdgeInsets.symmetric(vertical: 20.0, horizontal: 15.0),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(1),
+                color: themeColors.tableSurroundColor,
                 borderRadius: BorderRadius.circular(15),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
+                    color: themeColors.btnTextColorReverse.withOpacity(0.2),
                     blurRadius: 20,
                     offset: Offset(0, 5),
                   ),
@@ -421,9 +430,9 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
                       bestScoreRank != 0)
                     Container(
                       margin: EdgeInsets.only(bottom: 16.0),
-                      padding: EdgeInsets.all(8.0),
+                      padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),  // Add padding to left and right sides
                       decoration: BoxDecoration(
-                        color: Colors.amber[100],
+                        color: themeColors.bestScoreBackground,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(
@@ -459,7 +468,7 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
                                   vertical: 5.0, horizontal: 10.0),
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
-                                  colors: [Colors.deepPurple, Colors.blueAccent],
+                                  colors: [themeColors.primaryColor, themeColors.secondaryColor],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ),
@@ -482,12 +491,12 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
                                       style: GoogleFonts.fredoka(
                                           fontWeight: FontWeight.normal,
                                           fontSize: 18,
-                                          color: Colors.white),
+                                          color: themeColors.btnTextColor),
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                     SizedBox(width: 8),
                                     Icon(Icons.arrow_drop_down,
-                                        color: Colors.white),
+                                        color: themeColors.btnTextColor),
                                   ],
                                 ),
                                 itemBuilder: (BuildContext context) =>
@@ -506,7 +515,7 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                         Icon(_getIconForMode(mode),
-                                            color: Colors.deepPurple),
+                                            color: themeColors.primaryColor),
                                       ],
                                     ),
                                   );
@@ -602,9 +611,9 @@ class _DataTableSource extends DataTableSource {
     return DataRow(
       cells: [
         DataCell(Center(child: Text((index + 1).toString()))),
-        DataCell(Expanded(child: Center(child: Text(scores[index]['name'])))),
-        DataCell(Expanded(child: Center(child: Text(scores[index]['score'].toString())))),
-        DataCell(Expanded(child: Center(child: Text(scores[index]['timeElapsed'])))),
+        DataCell(Center(child: Text(scores[index]['name']))),
+        DataCell(Center(child: Text(scores[index]['score'].toString()))),
+        DataCell(Center(child: Text(scores[index]['timeElapsed']))),
       ],
     );
   }

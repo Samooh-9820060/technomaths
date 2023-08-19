@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';  // import this
+import 'package:technomaths/config/ThemeHelper.dart';
 import 'package:technomaths/screens/wall_of_fame.dart';
 import 'package:technomaths/utils/commonFunctions.dart';
 import 'package:technomaths/widgets/animated_buttons.dart';
 import 'package:technomaths/screens/game_screen.dart';
 import 'package:technomaths/config/game_mode.dart';
 import 'package:technomaths/config/game_speed.dart';
-
 import 'home_screen.dart';
 
 
@@ -24,13 +24,15 @@ class EndlessModeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeColors = ThemeHelper(context);
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.blueAccent, size: 30),
+          icon: Icon(Icons.arrow_back, color: themeColors.iconColor, size: 30),
           onPressed: () async {
             Navigator.pushReplacement(
                 context,
@@ -42,7 +44,7 @@ class EndlessModeScreen extends StatelessWidget {
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 10.0), // Adjust the horizontal padding as needed
             child: IconButton(
-              icon: FaIcon(FontAwesomeIcons.trophy, color: Colors.blueAccent, size: 30),
+              icon: FaIcon(FontAwesomeIcons.trophy, color: themeColors.iconColor, size: 30),
               onPressed: () async {
                 await performVibration();
                 Navigator.of(context).push(MaterialPageRoute(
@@ -61,7 +63,7 @@ class EndlessModeScreen extends StatelessWidget {
           children: <Widget>[
             Text(
               'Choose Endless Mode',
-              style: GoogleFonts.fredoka(fontSize: 30, color: Colors.blueAccent), // Use Google font here
+              style: GoogleFonts.fredoka(fontSize: 30, color: themeColors.headerColor), // Use Google font here
             ),
             const SizedBox(height: 50),
             AnimatedButton('Addition', onPressed: () async {
