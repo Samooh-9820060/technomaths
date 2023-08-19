@@ -100,16 +100,43 @@ class commonFunctions {
   }
 
 
-
   //get set shared preferences
   static Future<bool> isNotificationAllowed() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getBool('isNotificationsOn') ?? true;  // default to true if not set
   }
-  static updatePreference(String key, bool value) async {
+
+  static Future<dynamic> getPreference(String key, dynamic defaultValue) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setBool(key, value);
+
+    if (defaultValue is bool) {
+      return prefs.getBool(key) ?? defaultValue;
+    } else if (defaultValue is int) {
+      return prefs.getInt(key) ?? defaultValue;
+    } else if (defaultValue is double) {
+      return prefs.getDouble(key) ?? defaultValue;
+    } else if (defaultValue is String) {
+      return prefs.getString(key) ?? defaultValue;
+    } else {
+      throw Exception("Invalid default data type for SharedPreferences.");
+    }
   }
+
+  static updatePreference(String key, dynamic value) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (value is bool) {
+      prefs.setBool(key, value);
+    } else if (value is int) {
+      prefs.setInt(key, value);
+    } else if (value is double) {
+      prefs.setDouble(key, value);
+    } else if (value is String) {
+      prefs.setString(key, value);
+    } else {
+      throw Exception("Invalid data type for SharedPreferences.");
+    }
+  }
+
   static Future<void> setDefaultPreferences() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     bool? isFirstRun = prefs.getBool('isFirstRun');
