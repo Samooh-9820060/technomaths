@@ -23,6 +23,9 @@ void main() async {
   await notificationService.initialize();
 
   String? initialThemeKey = await commonFunctions.getPreference('appTheme', '');
+  if (initialThemeKey == ''){
+    initialThemeKey = null;
+  }
   runApp(MyApp(initialThemeKey: initialThemeKey ?? 'light'));
   //debugPaintSizeEnabled = true;
 }
@@ -37,12 +40,15 @@ class MyApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (context) => ThemeNotifier(themes[initialThemeKey]!, initialThemeKey),
       child: Consumer<ThemeNotifier>(
-        builder: (context, theme, child) => MaterialApp(
-          title: 'TechnoMaths',
-          theme: theme.getTheme(),
-          home: const HomeScreen(),
-          debugShowCheckedModeBanner: false,
-        ),
+        builder: (context, theme, child) {
+          ThemeData currentTheme = theme?.getTheme() ?? themes['light']!.themeData;
+          return MaterialApp(
+            title: 'TechnoMaths',
+            theme: currentTheme,
+            home: const HomeScreen(),
+            debugShowCheckedModeBanner: false,
+          );
+        },
       ),
     );
   }
