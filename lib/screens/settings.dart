@@ -34,7 +34,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _isVibrationOn = preferences['isVibrationOn']!;
       _isNotificationsOn = preferences['isNotificationsOn']!;
       _appTheme = preferences['appTheme']!;
-      print(_appTheme);
       _isLoading = false;
     });
   }

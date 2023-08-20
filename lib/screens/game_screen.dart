@@ -183,8 +183,10 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   @override
   void dispose() {
     timer?.cancel();
-    super.dispose();
     _scoreController.dispose();
+    totalGameTimer?.cancel();
+    _rewardedAd?.dispose();
+    _interstitialAd?.dispose();
     super.dispose();
   }
   void increaseDifficulty() {
@@ -390,6 +392,8 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   void checkAnswer(String selectedOption, dynamic correctAnswer) {
     // Cancel the timer regardless of the correctness of the answer
     timer?.cancel();
+    print('Lives: $lives');
+
 
     if (_canVibrate) {
       if (selectedOption == correctAnswer.toString()) {
@@ -412,10 +416,10 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       generateQuestion();
     } else {
       setState(() {
-        lives--;
-        print(themeColors.errorColor);
+        lives = max(0, lives - 1);
         _backgroundColor = themeColors.errorColor;
       });
+
 
 
       Future.delayed(const Duration(milliseconds: 300), () {
@@ -670,7 +674,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                           const SizedBox(height: 30),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children: List.generate(lives, (index) => Icon(Icons.favorite, color: themeColors.errorColor, size: 40)).toList(),
+                            children: List.generate(max(0, lives), (index) => Icon(Icons.favorite, color: themeColors.errorColor, size: 40)).toList(),
                           ),
                           const SizedBox(height: 30),
                           Center(
@@ -717,7 +721,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
               ),
             ),
             // Game Over overlay
-            if (lives == 0) ...[
+        if (lives == 0) ...[
               BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
                 child: Container(
@@ -757,7 +761,9 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                                   hintText: 'Name',
                                   border: InputBorder.none,
                                   contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                  counterText: '',
                                 ),
+                                maxLength: 12,
                                 onChanged: (value) {
                                   _savePlayerName(value);
                                   setState(() {});
