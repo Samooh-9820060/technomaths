@@ -152,6 +152,8 @@ class commonFunctions {
     if (isFirstRun == null || isFirstRun) {
       await prefs.setBool('isVibrationOn', true);
       await prefs.setBool('isNotificationsOn', areNotificationsPermitted);
+      await prefs.setBool('isPersonalizedAdsOn', true);
+      await prefs.setString('appTheme', 'light');
       // await prefs.setBool('isDarkTheme', true); // Uncomment this if you need it
       await prefs.setBool('isFirstRun', false);
     }

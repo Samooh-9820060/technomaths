@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:technomaths/config/game_mode.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -57,12 +58,20 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
   @override
   void initState() {
     super.initState();
+    loadPreferences();
     _createInterstitialAd();
     selectedMode = widget.gameMode;
     _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(_handleTabSelection);
     _loadScores();
   }
+
+  bool _isPersonalizedAdsOn = true;
+  Future<void> loadPreferences() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    _isPersonalizedAdsOn = prefs.getBool('isPersonalizedAdsOn') ?? true;
+  }
+
   void _handleTabSelection() {
     var previousMode;
     if (_tabController.indexIsChanging || previousMode != selectedMode) {
@@ -97,10 +106,17 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
     }
   }
 
+  AdRequest get request {
+    return AdRequest(
+      keywords: <String>['foo', 'bar'],
+      contentUrl: 'http://foo.com/bar.html',
+      nonPersonalizedAds: !_isPersonalizedAdsOn,
+    );
+  }
   void _createInterstitialAd() {
     InterstitialAd.load(
         adUnitId: commonFunctions.getAdUnitId(AdType.interstitial),
-        request: AdRequest(),
+        request: request,
         adLoadCallback: InterstitialAdLoadCallback(
           onAdLoaded: (InterstitialAd ad) {
             _interstitialAd = ad;

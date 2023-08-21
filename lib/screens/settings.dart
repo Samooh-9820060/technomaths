@@ -18,6 +18,7 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _isVibrationOn = true;
   bool _isNotificationsOn = true;
+  bool _isPersonalizedAdsOn = true;
   String _appTheme = 'light';
   bool _isLoading = true;
   late var themeColors;
@@ -33,6 +34,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() {
       _isVibrationOn = preferences['isVibrationOn']!;
       _isNotificationsOn = preferences['isNotificationsOn']!;
+      _isPersonalizedAdsOn = preferences['isPersonalizedAdsOn']!;
       _appTheme = preferences['appTheme']!;
       _isLoading = false;
     });
@@ -44,6 +46,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       'isVibrationOn': prefs.getBool('isVibrationOn') ?? true,
       'isNotificationsOn': prefs.getBool('isNotificationsOn') ?? true,
       'appTheme': prefs.getString('appTheme') ?? 'light',  // Using new preference key
+      'isPersonalizedAdsOn' : prefs.getBool('isPersonalizedAdsOn') ?? true,
     };
   }
 
@@ -175,6 +178,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       commonFunctions.updatePreference('isNotificationsOn', value);
                     }
                   }
+                },
+                activeColor: themeColors.iconColor,
+              ),
+            ),
+            ListTile(
+              title: Text(
+                'Personalized Ads',
+                style: GoogleFonts.fredoka(color: themeColors.textColor),
+              ),
+              subtitle: Text(
+                'Show ads based on your interests. Turn off for generic ads.',
+                style: TextStyle(fontSize: 12, color: themeColors.textColor.withOpacity(0.7)),
+              ),
+              trailing: Switch(
+                value: _isPersonalizedAdsOn,
+                onChanged: (bool value) {
+                  setState(() {
+                    _isPersonalizedAdsOn = value;
+                    commonFunctions.updatePreference('isPersonalizedAdsOn', value);
+                  });
                 },
                 activeColor: themeColors.iconColor,
               ),

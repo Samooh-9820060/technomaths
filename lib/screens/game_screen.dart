@@ -68,6 +68,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     super.initState();
     _loadPlayerName();
     _loadHighestScore();
+    loadPreferences();
     _createRewardedAd();
     _createInterstitialAd();
     generateQuestion();
@@ -84,12 +85,21 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     _canVibrate = await commonFunctions.checkVibrationSupport();
   }
 
+  bool _isPersonalizedAdsOn = true;
+  Future<void> loadPreferences() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    _isPersonalizedAdsOn = prefs.getBool('isPersonalizedAdsOn') ?? true;
+  }
+
   //ads related
-  static const AdRequest request = AdRequest(
-    keywords: <String>['foo', 'bar'],
-    contentUrl: 'http://foo.com/bar.html',
-    nonPersonalizedAds: true,
-  );
+  AdRequest get request {
+    return AdRequest(
+      keywords: <String>['foo', 'bar'],
+      contentUrl: 'http://foo.com/bar.html',
+      nonPersonalizedAds: !_isPersonalizedAdsOn,
+    );
+  }
+
   void _createRewardedAd() {
     RewardedAd.load(
         adUnitId: commonFunctions.getAdUnitId(AdType.rewarded),
@@ -144,7 +154,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   void _createInterstitialAd() {
     InterstitialAd.load(
         adUnitId: commonFunctions.getAdUnitId(AdType.interstitial),
-        request: AdRequest(),
+        request: request,
         adLoadCallback: InterstitialAdLoadCallback(
           onAdLoaded: (InterstitialAd ad) {
             _interstitialAd = ad;
