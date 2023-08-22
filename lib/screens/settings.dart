@@ -21,12 +21,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _isPersonalizedAdsOn = true;
   String _appTheme = 'light';
   bool _isLoading = true;
+  String? appVersion;
   late var themeColors;
 
   @override
   void initState() {
     super.initState();
     _loadInitialPreferences();
+    _getAppVersion();
+  }
+
+  Future<void> _getAppVersion() async {
+    PackageInfo packageInfo = await PackageInfo.fromPlatform();
+    setState(() {
+      appVersion = "Version ${packageInfo.version}";
+    });
   }
 
   _loadInitialPreferences() async {
@@ -121,100 +130,116 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
       ),
-      body: Container(
-        child: ListView(
-          padding: const EdgeInsets.all(20.0),
-          children: [
-            ListTile(
-              title: Text(
-                'Vibration',
-                style: GoogleFonts.fredoka(color: themeColors.textColor),
-              ),
-              trailing: Switch(
-                value: _isVibrationOn,
-                onChanged: (bool value) {
-                  setState(() {
-                    _isVibrationOn = value;
-                    commonFunctions.updatePreference('isVibrationOn', value);
-                  });
-                },
-                activeColor: themeColors.iconColor,
-              ),
-            ),
-            Divider(),
-            ListTile(
-              title: Text(
-                'Notifications',
-                style: GoogleFonts.fredoka(color: themeColors.textColor),
-              ),
-              trailing: Switch(
-                value: _isNotificationsOn,
-                onChanged: (bool value) async {
-                  if (!value) {
-                    // If user is trying to switch off, just update the preference.
-                    setState(() {
-                      _isNotificationsOn = value;
-                    });
-                    commonFunctions.updatePreference('isNotificationsOn', value);
-                  } else {
-                    // If user is trying to switch on, check if permissions are granted.
-                    var permissionStatus = await NotificationPermissions.getNotificationPermissionStatus();
-                    if (permissionStatus != PermissionStatus.granted) {
-                      PackageInfo packageInfo = await PackageInfo.fromPlatform();
-                      String packageName = packageInfo.packageName;
+      body: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                children: [
+                  ListTile(
+                    title: Text(
+                      'Vibration',
+                      style: GoogleFonts.fredoka(color: themeColors.textColor),
+                    ),
+                    subtitle: Text(
+                      'Turn on or off vibrations for button clicks.',
+                      style: TextStyle(fontSize: 12, color: themeColors.textColor.withOpacity(0.7)),
+                    ),
+                    trailing: Switch(
+                      value: _isVibrationOn,
+                      onChanged: (bool value) {
+                        setState(() {
+                          _isVibrationOn = value;
+                          commonFunctions.updatePreference('isVibrationOn', value);
+                        });
+                      },
+                      activeColor: themeColors.iconColor,
+                    ),
+                  ),
+                  Divider(),
+                  ListTile(
+                    title: Text(
+                      'Notifications',
+                      style: GoogleFonts.fredoka(color: themeColors.textColor),
+                    ),
+                    subtitle: Text(
+                      'Enable or disable app notifications.',
+                      style: TextStyle(fontSize: 12, color: themeColors.textColor.withOpacity(0.7)),
+                    ),
+                    trailing: Switch(
+                      value: _isNotificationsOn,
+                      onChanged: (bool value) async {
+                        if (!value) {
+                          // If user is trying to switch off, just update the preference.
+                          setState(() {
+                            _isNotificationsOn = value;
+                          });
+                          commonFunctions.updatePreference('isNotificationsOn', value);
+                        } else {
+                          // If user is trying to switch on, check if permissions are granted.
+                          var permissionStatus = await NotificationPermissions.getNotificationPermissionStatus();
+                          if (permissionStatus != PermissionStatus.granted) {
+                            PackageInfo packageInfo = await PackageInfo.fromPlatform();
+                            String packageName = packageInfo.packageName;
 
-                      // If permissions are not granted, open app settings.
-                      final intent = AndroidIntent(
-                        action: 'android.settings.APPLICATION_DETAILS_SETTINGS',
-                        data: 'package:$packageName',
-                        package: 'com.android.settings',
-                      );
-                      await intent.launch();
+                            // If permissions are not granted, open app settings.
+                            final intent = AndroidIntent(
+                              action: 'android.settings.APPLICATION_DETAILS_SETTINGS',
+                              data: 'package:$packageName',
+                              package: 'com.android.settings',
+                            );
+                            await intent.launch();
 
-                    } else {
-                      setState(() {
-                        _isNotificationsOn = value;
-                      });
-                      commonFunctions.updatePreference('isNotificationsOn', value);
-                    }
-                  }
-                },
-                activeColor: themeColors.iconColor,
-              ),
-            ),
-            ListTile(
-              title: Text(
-                'Personalized Ads',
-                style: GoogleFonts.fredoka(color: themeColors.textColor),
-              ),
-              subtitle: Text(
-                'Show ads based on your interests. Turn off for generic ads.',
-                style: TextStyle(fontSize: 12, color: themeColors.textColor.withOpacity(0.7)),
-              ),
-              trailing: Switch(
-                value: _isPersonalizedAdsOn,
-                onChanged: (bool value) {
-                  setState(() {
-                    _isPersonalizedAdsOn = value;
-                    commonFunctions.updatePreference('isPersonalizedAdsOn', value);
-                  });
-                },
-                activeColor: themeColors.iconColor,
-              ),
-            ),
-            Divider(),
-            ListTile(
-              title: Text(
-                'Change Theme',
-                style: GoogleFonts.fredoka(color: themeColors.textColor),
-              ),
-              trailing: Icon(Icons.color_lens, color: themeColors.iconColor),
-              onTap: () {
-                _showThemeBottomSheet(context);
-              },
-            ),
-            Divider(),
-            /*ElevatedButton(
+                          } else {
+                            setState(() {
+                              _isNotificationsOn = value;
+                            });
+                            commonFunctions.updatePreference('isNotificationsOn', value);
+                          }
+                        }
+                      },
+                      activeColor: themeColors.iconColor,
+                    ),
+                  ),
+                  Divider(),
+                  ListTile(
+                    title: Text(
+                      'Personalized Ads',
+                      style: GoogleFonts.fredoka(color: themeColors.textColor),
+                    ),
+                    subtitle: Text(
+                      'Show ads based on your interests. Turn off for generic ads.',
+                      style: TextStyle(fontSize: 12, color: themeColors.textColor.withOpacity(0.7)),
+                    ),
+                    trailing: Switch(
+                      value: _isPersonalizedAdsOn,
+                      onChanged: (bool value) {
+                        setState(() {
+                          _isPersonalizedAdsOn = value;
+                          commonFunctions.updatePreference('isPersonalizedAdsOn', value);
+                        });
+                      },
+                      activeColor: themeColors.iconColor,
+                    ),
+                  ),
+                  Divider(),
+                  ListTile(
+                    title: Text(
+                      'Change Theme',
+                      style: GoogleFonts.fredoka(color: themeColors.textColor),
+                    ),
+                    subtitle: Text(
+                      'Choose a theme that suits your style.',
+                      style: TextStyle(fontSize: 12, color: themeColors.textColor.withOpacity(0.7)),
+                    ),
+                    trailing: Icon(Icons.color_lens, color: themeColors.iconColor),
+                    onTap: () {
+                      _showThemeBottomSheet(context);
+                    },
+                  ),
+                  Divider(),
+                  /*ElevatedButton(
               onPressed: () {
                 //TODO: Add functionality for resetting data
               },
@@ -225,9 +250,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 minimumSize: Size(MediaQuery.of(context).size.width * 0.4, 50),
               ),
-            ),*/
-          ],
-        ),
+            ),*/                ],
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Center(
+              child: Text(
+                appVersion ?? "",
+                style: TextStyle(
+                  fontSize: 14,
+                  color: themeColors.textColor.withOpacity(0.5),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
