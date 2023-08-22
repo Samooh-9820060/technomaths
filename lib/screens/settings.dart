@@ -130,6 +130,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 'Vibration',
                 style: GoogleFonts.fredoka(color: themeColors.textColor),
               ),
+              subtitle: Text(
+                'Turn on or off vibrations for button clicks.',
+                style: TextStyle(fontSize: 12, color: themeColors.textColor.withOpacity(0.7)),
+              ),
               trailing: Switch(
                 value: _isVibrationOn,
                 onChanged: (bool value) {
@@ -146,6 +150,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               title: Text(
                 'Notifications',
                 style: GoogleFonts.fredoka(color: themeColors.textColor),
+              ),
+              subtitle: Text(
+                'Enable or disable app notifications.',
+                style: TextStyle(fontSize: 12, color: themeColors.textColor.withOpacity(0.7)),
               ),
               trailing: Switch(
                 value: _isNotificationsOn,
@@ -182,6 +190,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 activeColor: themeColors.iconColor,
               ),
             ),
+            Divider(),
             ListTile(
               title: Text(
                 'Personalized Ads',
@@ -207,6 +216,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               title: Text(
                 'Change Theme',
                 style: GoogleFonts.fredoka(color: themeColors.textColor),
+              ),
+              subtitle: Text(
+                'Choose a theme that suits your style.',
+                style: TextStyle(fontSize: 12, color: themeColors.textColor.withOpacity(0.7)),
               ),
               trailing: Icon(Icons.color_lens, color: themeColors.iconColor),
               onTap: () {
