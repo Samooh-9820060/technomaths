@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:technomaths/config/ThemeHelper.dart';
 import 'package:technomaths/config/extended_theme.dart';
+import 'package:technomaths/screens/levels_screen.dart';
 import 'package:technomaths/screens/settings.dart';
 import 'package:technomaths/utils/commonFunctions.dart';
 import 'package:technomaths/widgets/animated_buttons.dart';
@@ -38,6 +39,13 @@ class HomeScreen extends StatelessWidget {
                 style: GoogleFonts.fredoka(fontSize: 40, color: themeColors.headerColor),
               ),
               SizedBox(height: 50), // Add this for extra space
+              AnimatedButton('Levels', onPressed: () async {
+                await performVibration();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => LevelsJourneyScreen()),
+                );
+              }),
               AnimatedButton('Endless', onPressed: () async {
                 await performVibration();
                 Navigator.push(
