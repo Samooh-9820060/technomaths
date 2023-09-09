@@ -4,12 +4,13 @@ Dive into the world of TechnoMaths—a captivating mathematical game designed to
 
 ## Screenshots
 
-![Home Screenshot](./screenshots/phone/photo_2023-09-09_23-31-55.jpg)
-![Endless Menu Screenshot](./screenshots/phone/photo_2023-09-09_23-31-56.jpg)
-![Gameplay Screenshot](./screenshots/phone/photo_2023-09-09_23-31-57.jpg)
-![Gameover Screenshot](./screenshots/phone/photo_2023-09-09_23-31-58.jpg)
-![Wall of Fame Screenshot](./screenshots/phone/photo_2023-09-09_23-31-59.jpg)
-
+<p float="left">
+  <img src="./screenshots/phone/photo_2023-09-09_23-31-55.jpg" width="170" />
+  <img src="./screenshots/phone/photo_2023-09-09_23-31-56.jpg" width="170" /> 
+  <img src="./screenshots/phone/photo_2023-09-09_23-31-57.jpg" width="170" />
+  <img src="./screenshots/phone/photo_2023-09-09_23-31-58.jpg" width="170" />
+  <img src="./screenshots/phone/photo_2023-09-09_23-31-59.jpg" width="170" />
+</p>
 
 ## Key Features
 
