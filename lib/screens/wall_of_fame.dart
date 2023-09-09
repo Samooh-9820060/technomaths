@@ -67,6 +67,7 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
   }
 
   bool _isPersonalizedAdsOn = true;
+
   Future<void> loadPreferences() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     _isPersonalizedAdsOn = prefs.getBool('isPersonalizedAdsOn') ?? true;
@@ -113,6 +114,7 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
       nonPersonalizedAds: !_isPersonalizedAdsOn,
     );
   }
+
   void _createInterstitialAd() {
     InterstitialAd.load(
         adUnitId: commonFunctions.getAdUnitId(AdType.interstitial),
@@ -132,6 +134,7 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
           },
         ));
   }
+
   void showAd() {
     var rng = new Random();
     if (rng.nextInt(100) < 50) {
@@ -150,6 +153,7 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
       _interstitialAd!.show();
     }
   }
+
   Future<void> _loadScores() async {
     List<Map<String, dynamic>> dbRows = await DatabaseHelper.instance
         .queryRowsByGameMode(selectedMode.toString());
@@ -221,6 +225,7 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
     totalCount = fetchedScores.length;
     return fetchedScores;
   }
+
   Future<List<Map<String, dynamic>>> _loadAllTimeScores() async {
     //get total count and update it
     AggregateQuerySnapshot countSnapshot = await FirebaseFirestore.instance
@@ -258,16 +263,19 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
 
     if (queryResult.docs.isEmpty) {
       bestScore = 0;
-      bestScoreRank = 0;// No score found for the user
+      bestScoreRank = 0; // No score found for the user
     } else {
-      Map<String, dynamic>? data = queryResult.docs.first.data() as Map<String, dynamic>?;
+      Map<String, dynamic>? data =
+          queryResult.docs.first.data() as Map<String, dynamic>?;
       if (data != null) {
         bestScore = data['score'] ?? 0;
 
         String? timeElapsedString = data['timeElapsed'] as String?;
         if (timeElapsedString != null) {
-          int timeElapsedInSeconds = commonFunctions.convertTimeStringToSeconds(timeElapsedString);
-          bestScoreRank = await getRankForScore(bestScore, timeElapsedInSeconds);
+          int timeElapsedInSeconds =
+              commonFunctions.convertTimeStringToSeconds(timeElapsedString);
+          bestScoreRank =
+              await getRankForScore(bestScore, timeElapsedInSeconds);
         } else {
           // handle the case where timeElapsed is null
         }
@@ -275,14 +283,15 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
         bestScore = 0;
         bestScoreRank = 0;
       }
-
     }
 
     return fetchedScores;
   }
+
   Future<int> getRankForScore(int score, int timeElapsedInSeconds) async {
     // First count all the scores higher than the given score
-    AggregateQuerySnapshot scoresHigherThanGiven = await FirebaseFirestore.instance
+    AggregateQuerySnapshot scoresHigherThanGiven = await FirebaseFirestore
+        .instance
         .collection('endlessModeGameData')
         .where('gameMode', isEqualTo: selectedMode.toString())
         .where('score', isGreaterThan: score)
@@ -290,25 +299,34 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
         .get();
 
     // Now, for the scores that are equal to the given score, count the ones with less time elapsed (i.e. faster completion times)
-    AggregateQuerySnapshot scoresEqualButFaster = await FirebaseFirestore.instance
+    AggregateQuerySnapshot scoresEqualButFaster = await FirebaseFirestore
+        .instance
         .collection('endlessModeGameData')
         .where('gameMode', isEqualTo: selectedMode.toString())
         .where('score', isEqualTo: score)
-        .where('timeElapsed', isLessThanOrEqualTo: commonFunctions.convertSecondsToTimeString(timeElapsedInSeconds))
+        .where('timeElapsed',
+            isLessThanOrEqualTo: commonFunctions
+                .convertSecondsToTimeString(timeElapsedInSeconds))
         .count()
         .get();
 
     // Subtract the number of scores that are exactly equal to the given timeElapsed
-    AggregateQuerySnapshot scoresExactlyEqualTime = await FirebaseFirestore.instance
+    AggregateQuerySnapshot scoresExactlyEqualTime = await FirebaseFirestore
+        .instance
         .collection('endlessModeGameData')
         .where('gameMode', isEqualTo: selectedMode.toString())
         .where('score', isEqualTo: score)
-        .where('timeElapsed', isEqualTo: commonFunctions.convertSecondsToTimeString(timeElapsedInSeconds))
+        .where('timeElapsed',
+            isEqualTo: commonFunctions
+                .convertSecondsToTimeString(timeElapsedInSeconds))
         .count()
         .get();
 
     // The rank will be the sum of scoresHigherThanGiven and scoresEqualButFaster minus scoresExactlyEqualTime plus one (1-based ranking)
-    int rank = scoresHigherThanGiven.count + scoresEqualButFaster.count - scoresExactlyEqualTime.count + 1;
+    int rank = scoresHigherThanGiven.count +
+        scoresEqualButFaster.count -
+        scoresExactlyEqualTime.count +
+        1;
 
     return rank;
   }
@@ -348,27 +366,25 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
 
   @override
   Widget build(BuildContext context) {
-
     themeColors = ThemeHelper(context, listen: false);
-
     return DefaultTabController(
-        length: 3,
-        child: Scaffold(
+      length: 3,
+      child: Stack(children: [
+        Container(
+          decoration: themeColors.currentTheme.backgroundDecoration(true),
+        ),
+        Scaffold(
+          backgroundColor: Colors.transparent,
           appBar: AppBar(
-            title:
-                Text('Wall of Fame (Endless)', style: GoogleFonts.fredoka(fontSize: 22)),
+            title: Text('Wall of Fame (Endless)',
+                style: GoogleFonts.fredoka(fontSize: 22)),
             // Use a different font
-            backgroundColor: themeColors.primaryColor,
-            // Gradient start color
-            flexibleSpace: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [themeColors.primaryColor, themeColors.secondaryColor],
+            //backgroundColor: Colors.transparent,
+            backgroundColor: themeColors.appBarBackgroundColor,
+                // Gradient start color
+                flexibleSpace: Container(
+                  decoration: themeColors.appBarBackgroundDecoration,
                 ),
-              ),
-            ),
             bottom: TabBar(
               controller: _tabController,
               indicatorColor: themeColors.buttonIndicatorColor,
@@ -381,16 +397,17 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
             ),
           ),
           body: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topRight,
-                end: Alignment.bottomLeft,
-                colors: [
-                  themeColors.secondaryColor.withOpacity(0.2),
-                  themeColors.primaryColor.withOpacity(0.2),
-                ],
+            /*decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage("assets/background.jpg"),
+                fit: BoxFit.cover,
+                colorFilter: ColorFilter.mode(
+                  Colors.black.withOpacity(0.3), // This sets the opacity
+                  BlendMode
+                      .dstATop, // This blend mode will overlay the color on top of the image
+                ),
               ),
-            ),
+            ),*/
             child: Stack(
               children: [
                 TabBarView(
@@ -404,23 +421,24 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
               ],
             ),
           ),
-        )
+        ),
+      ]),
     );
   }
 
   Widget _buildScoreList(
       List<Map<String, dynamic>> scores, GameMode mode, String tabType) {
-
     //define screen widths
     double screenWidth = MediaQuery.of(context).size.width;
-    
 
     return FutureBuilder(
         // Delay for 2 seconds
         future: Future.delayed(Duration(seconds: 2), () => scores),
-        builder: (BuildContext context, AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
+        builder: (BuildContext context,
+            AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
           var filteredScores = scores;
-          if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
+          if (snapshot.connectionState == ConnectionState.done &&
+              snapshot.hasData) {
             filteredScores = scores;
           }
 
@@ -429,15 +447,16 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
               margin: EdgeInsets.all(10.0),
               padding: EdgeInsets.symmetric(vertical: 20.0, horizontal: 15.0),
               decoration: BoxDecoration(
-                color: themeColors.tableSurroundColor,
+                //color: themeColors.tableSurroundColor,
+                color: Colors.transparent,
                 borderRadius: BorderRadius.circular(15),
-                boxShadow: [
+                /*boxShadow: [
                   BoxShadow(
                     color: themeColors.btnTextColorReverse.withOpacity(0.2),
                     blurRadius: 20,
                     offset: Offset(0, 5),
                   ),
-                ],
+                ],*/
               ),
               child: Column(
                 children: [
@@ -446,140 +465,169 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
                       bestScoreRank != 0)
                     Container(
                       margin: EdgeInsets.only(bottom: 16.0),
-                      padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),  // Add padding to left and right sides
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                      // Add padding to left and right sides
                       decoration: BoxDecoration(
-                        color: themeColors.bestScoreBackground,
-                        borderRadius: BorderRadius.circular(10),
+                        gradient: LinearGradient(
+                          colors: [
+                            themeColors.primaryColor,
+                            themeColors.secondaryColor
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(12.0),
                       ),
                       child: Row(
                         children: [
                           Text(
                             "Your Best Score: ${bestScore}",
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                              color: themeColors.btnTextColor,
+                            ),
                           ),
                           Spacer(),
-                          Text("Rank: $bestScoreRank"),
+                          Text("Rank: $bestScoreRank", style: TextStyle(
+                            color: themeColors.btnTextColor,
+                          ),),
                         ],
                       ),
                     ),
-                  Flex(
-                    direction: Axis.horizontal,
-                    children: [Expanded(
-                      child: PaginatedDataTable(
-                        key: ValueKey(_tableKey),
-                        rowsPerPage: rowsPerPage,
-                        header: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                'Scores',
-                                style: GoogleFonts.fredoka(
-                                    fontWeight: FontWeight.bold, fontSize: 24),
-                                overflow: TextOverflow.ellipsis,
+                  Flex(direction: Axis.horizontal, children: [
+                    Expanded(
+                      child: Theme(
+                        data: Theme.of(context).copyWith(
+                          cardTheme: CardTheme(
+                            color: Colors.transparent,
+                            elevation: 0, // This removes the elevation
+                          ),
+                        ),
+                        child: PaginatedDataTable(
+                          key: ValueKey(_tableKey),
+                          rowsPerPage: rowsPerPage,
+                          header: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  'Scores',
+                                  style: GoogleFonts.fredoka(
+                                      fontWeight: FontWeight.bold,
+                                      color: themeColors.textColor,
+                                      fontSize: 24),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                    vertical: 5.0, horizontal: 10.0),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      themeColors.primaryColor,
+                                      themeColors.secondaryColor
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12.0),
+                                ),
+                                child: PopupMenuButton<GameMode>(
+                                  onSelected: (GameMode mode) {
+                                    setState(() {
+                                      selectedMode = mode;
+                                      initialRow = 0;
+                                      _tableKey++;
+                                    });
+                                    _handleTabSelection();
+                                  },
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        selectedMode.toString().split('.').last,
+                                        style: GoogleFonts.fredoka(
+                                            fontWeight: FontWeight.normal,
+                                            fontSize: 18,
+                                            color: themeColors.btnTextColor),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      SizedBox(width: 8),
+                                      Icon(Icons.arrow_drop_down,
+                                          color: themeColors.btnTextColor),
+                                    ],
+                                  ),
+                                  itemBuilder: (BuildContext context) =>
+                                      GameMode.values.map((GameMode mode) {
+                                    return PopupMenuItem<GameMode>(
+                                      value: mode,
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            mode.toString().split('.').last,
+                                            style: GoogleFonts.fredoka(
+                                                fontWeight: FontWeight.normal,
+                                                color: themeColors.textColor,
+                                                fontSize: 16),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          Icon(_getIconForMode(mode),
+                                              color: themeColors.primaryColor),
+                                        ],
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
+                            ],
+                          ),
+                          columns: [
+                            DataColumn(
+                              label: Flexible(
+                                child: Center(
+                                    child: Text('#',
+                                        style: GoogleFonts.fredoka(
+                                            color: themeColors.textColor
+                                        )
+                                    )
+                                ),
                               ),
                             ),
-                            SizedBox(width: 8),
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                  vertical: 5.0, horizontal: 10.0),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [themeColors.primaryColor, themeColors.secondaryColor],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                borderRadius: BorderRadius.circular(12.0),
+                            DataColumn(
+                              label: Flexible(
+                                child: Center(
+                                    child: Text('Name',
+                                        style: GoogleFonts.fredoka(
+                                            color: themeColors.textColor
+                                        ))),
                               ),
-                              child: PopupMenuButton<GameMode>(
-                                onSelected: (GameMode mode) {
-                                  setState(() {
-                                    selectedMode = mode;
-                                    initialRow = 0;
-                                    _tableKey++;
-                                  });
-                                  _handleTabSelection();
-                                },
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      selectedMode.toString().split('.').last,
-                                      style: GoogleFonts.fredoka(
-                                          fontWeight: FontWeight.normal,
-                                          fontSize: 18,
-                                          color: themeColors.btnTextColor),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    SizedBox(width: 8),
-                                    Icon(Icons.arrow_drop_down,
-                                        color: themeColors.btnTextColor),
-                                  ],
-                                ),
-                                itemBuilder: (BuildContext context) =>
-                                    GameMode.values.map((GameMode mode) {
-                                  return PopupMenuItem<GameMode>(
-                                    value: mode,
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          mode.toString().split('.').last,
-                                          style: GoogleFonts.fredoka(
-                                              fontWeight: FontWeight.normal,
-                                              fontSize: 16),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        Icon(_getIconForMode(mode),
-                                            color: themeColors.primaryColor),
-                                      ],
-                                    ),
-                                  );
-                                }).toList(),
+                            ),
+                            DataColumn(
+                              label: Flexible(
+                                child: Center(
+                                    child: Text('Score',
+                                        style: GoogleFonts.fredoka(
+                                            color: themeColors.textColor
+                                        ))),
+                              ),
+                            ),
+                            DataColumn(
+                              label: Flexible(
+                                child: Center(
+                                    child: Text('Time',
+                                        style: GoogleFonts.fredoka(
+                                            color: themeColors.textColor
+                                        ))),
                               ),
                             ),
                           ],
+                          source: _DataTableSource(
+                              filteredScores, totalCount, _loadNextPage, themeColors),
                         ),
-                        columns: [
-                          DataColumn(
-                            label: Flexible(
-                              child: Center(
-                                  child: Text('#',
-                                      style: GoogleFonts.fredoka(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16))),
-                            ),
-                          ),
-                          DataColumn(
-                            label: Flexible(
-                              child: Center(
-                                  child: Text('Name',
-                                      style: GoogleFonts.fredoka(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16))),
-                            ),
-                          ),
-                          DataColumn(
-                            label: Flexible(
-                              child: Center(
-                                  child: Text('Score',
-                                      style: GoogleFonts.fredoka(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16))),
-                            ),
-                          ),
-                          DataColumn(
-                            label: Flexible(
-                              child: Center(
-                                  child: Text('Time',
-                                      style: GoogleFonts.fredoka(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16))),
-                            ),
-                          ),
-                        ],
-                        source: _DataTableSource(
-                            filteredScores, totalCount, _loadNextPage),
                       ),
                     ),
                   ]),
@@ -614,8 +662,9 @@ class _DataTableSource extends DataTableSource {
   final List<Map<String, dynamic>> scores;
   final int totalCount;
   final VoidCallback loadNextPage;
+  final themeColors;
 
-  _DataTableSource(this.scores, this.totalCount, this.loadNextPage);
+  _DataTableSource(this.scores, this.totalCount, this.loadNextPage, this.themeColors);
 
   @override
   DataRow? getRow(int index) {
@@ -626,10 +675,46 @@ class _DataTableSource extends DataTableSource {
     }
     return DataRow(
       cells: [
-        DataCell(Center(child: Text((index + 1).toString()))),
-        DataCell(Center(child: Text(scores[index]['name']))),
-        DataCell(Center(child: Text(scores[index]['score'].toString()))),
-        DataCell(Center(child: Text(scores[index]['timeElapsed']))),
+        DataCell(
+            Center(
+                child: Text(
+                    (index + 1).toString(),
+                    style: GoogleFonts.fredoka(
+                        color: themeColors.textColor
+                    )
+                )
+            )
+        ),
+        DataCell(
+            Center(
+                child: Text(
+                    scores[index]['name'],
+                    style: GoogleFonts.fredoka(
+                        color: themeColors.textColor
+                    )
+                )
+            )
+        ),
+        DataCell(
+            Center(
+                child: Text(
+                    scores[index]['score'].toString(),
+                    style: GoogleFonts.fredoka(
+                        color: themeColors.textColor
+                    )
+                )
+            )
+        ),
+        DataCell(
+            Center(
+                child: Text(
+                    scores[index]['timeElapsed'],
+                    style: GoogleFonts.fredoka(
+                      color: themeColors.textColor
+                    )
+                )
+            )
+        ),
       ],
     );
   }

@@ -7,11 +7,17 @@ import 'package:technomaths/config/extended_theme.dart';
 import 'package:technomaths/config/theme_notifier.dart';
 import 'package:technomaths/config/themes.dart';
 import 'package:technomaths/config/ThemeHelper.dart';
-import 'package:technomaths/levels/Basic%20Arithmetic/Counting%20Numbers/1.dart';
+import 'package:technomaths/levels/2. Basic%20Arithmetic/Counting%20Numbers/1.dart';
 import 'package:tuple/tuple.dart';
+import '../levels/1. Introduction/Storyline/Start.dart';
 import 'home_screen.dart';
 
 final Map<String, Map<String, List<Tuple2<String, Widget>>>> categories = {
+  'Introduction': {
+    'Stroyline': [
+      Tuple2('Start', Start()),
+    ]
+  },
   'Basic Arithmetic': {
     'Counting numbers': [
       Tuple2('Level 1', lvl1()),
