@@ -28,5 +28,9 @@ class ThemeHelper {
   Color get tableSurroundColor => currentTheme.tableSurroundColor;
   Color get headerColor => currentTheme.headerColor;
   Color get iconColor => currentTheme.iconColor;
-
+  BoxDecoration getBackgroundDecoration([bool applyOpacity = false]) {
+    return currentTheme.backgroundDecoration(applyOpacity);
+  }
+  Color get appBarBackgroundColor => currentTheme.appBarBackgroundColor;
+  BoxDecoration? get appBarBackgroundDecoration => currentTheme.appBarBackgroundDecoration;
 }

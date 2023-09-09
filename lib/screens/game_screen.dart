@@ -18,7 +18,6 @@ import '../database/database_helper.dart';
 import '../utils/commonFunctions.dart';
 import 'endless_mode_screen.dart';
 
-
 class GameScreen extends StatefulWidget {
   GameMode gameMode;
   GameSpeed gameSpeed;
@@ -33,7 +32,10 @@ class GameScreen extends StatefulWidget {
   _GameScreenState createState() => _GameScreenState();
 }
 
-class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateMixin {
+class _GameScreenState extends State<GameScreen>
+    with SingleTickerProviderStateMixin {
+  Future<void>? _initialization;
+
   String question = '';
   List<String> options = [];
   int score = 0;
@@ -62,30 +64,33 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   TextEditingController _nameController = TextEditingController();
   late var themeColors;
 
-
   @override
   void initState() {
     super.initState();
-    _loadPlayerName();
-    _loadHighestScore();
-    loadPreferences();
-    _createRewardedAd();
-    _createInterstitialAd();
-    generateQuestion();
+    // Set up other synchronous initializations here, if any
     _scoreController = AnimationController(
         duration: Duration(milliseconds: 1000), vsync: this);
     _scoreAnimation = Tween<double>(begin: 0, end: 1).animate(_scoreController);
-    startTotalGameTimer();
-    dataSaved = 0;
-    canRevive = true;
-    initAsync();
+
+    // Call your async initialization function
+    _initialization = initAsync();
   }
 
   Future<void> initAsync() async {
+    await _loadPlayerName();
+    await _loadHighestScore();
+    await loadPreferences();
+    _createRewardedAd();
+    _createInterstitialAd();
+    generateQuestion();  // Assuming this is async
+    dataSaved = 0;
+    canRevive = true;
+    startTotalGameTimer();  // Assuming this is not async
     _canVibrate = await commonFunctions.checkVibrationSupport();
   }
 
   bool _isPersonalizedAdsOn = true;
+
   Future<void> loadPreferences() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     _isPersonalizedAdsOn = prefs.getBool('isPersonalizedAdsOn') ?? true;
@@ -118,6 +123,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
           },
         ));
   }
+
   void _showRewardedAd() {
     if (_rewardedAd == null) {
       return;
@@ -143,14 +149,17 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     _rewardedAd!.setImmersiveMode(true);
     _rewardedAd!.show(
         onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
-          //ad viewed
-          setState(() {
-            lives += 1;   // Award an extra life
-            canRevive = false;  // Ensure the user can't revive again until they lose again
-          });
-        });
+      //ad viewed
+      setState(() {
+        lives += 1; // Award an extra life
+        canRevive = false; // Ensure the user can't revive again until they lose again
+        //continue the timer
+        startTotalGameTimer();
+      });
+    });
     _rewardedAd = null;
   }
+
   void _createInterstitialAd() {
     InterstitialAd.load(
         adUnitId: commonFunctions.getAdUnitId(AdType.interstitial),
@@ -164,12 +173,14 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
           onAdFailedToLoad: (LoadAdError error) {
             _interstitialAd = null;
             _numInterstitialLoadAttempts += 1;
-            if (_numInterstitialLoadAttempts < maxFailedLoadAttemptsInterstitial) {
+            if (_numInterstitialLoadAttempts <
+                maxFailedLoadAttemptsInterstitial) {
               _createInterstitialAd();
             }
           },
         ));
   }
+
   void _showInterstitialAd() {
     var rng = new Random();
     if (rng.nextInt(100) < 20) {
@@ -178,11 +189,11 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       }
       _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
           onAdDismissedFullScreenContent: (InterstitialAd ad) {
-            ad.dispose();
-            _createInterstitialAd();  // Load another ad for next time
-          }, onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
         ad.dispose();
-        _createInterstitialAd();  // Load another ad for next time
+        _createInterstitialAd(); // Load another ad for next time
+      }, onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
+        ad.dispose();
+        _createInterstitialAd(); // Load another ad for next time
       });
 
       _interstitialAd!.show();
@@ -199,6 +210,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     _interstitialAd?.dispose();
     super.dispose();
   }
+
   void increaseDifficulty() {
     // Increase maxNumber every 5 levels
     if (score <= 10) {
@@ -206,17 +218,21 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     } else if (score <= 30) {
       maxNumber = 25 + score;
     } else if (score <= 50) {
-      maxNumber = 80 + score;  // For initial scores, increase by 1 unit.
+      maxNumber = 80 + score; // For initial scores, increase by 1 unit.
     } else if (score <= 100) {
-      maxNumber = 400 + 2 * (score - 50);  // Increase by 2 units for scores between 50 and 100.
+      maxNumber = 400 +
+          2 *
+              (score -
+                  50); // Increase by 2 units for scores between 50 and 100.
     } else if (score <= 150) {
-      maxNumber = 3000 + 5 * (score - 100);  // Increase by 5 units beyond 100.
+      maxNumber = 3000 + 5 * (score - 100); // Increase by 5 units beyond 100.
     } else {
-      maxNumber = 10000 + 10 * (score - 150);  // Further increase for high scores.
+      maxNumber =
+          10000 + 10 * (score - 150); // Further increase for high scores.
     }
 
     // Increase gameSpeed every 2 levels
-    if (score  % 10 == 0) {
+    if (score % 10 == 0) {
       switch (widget.gameSpeed) {
         case GameSpeed.fifteen:
           widget.gameSpeed = GameSpeed.fourteen;
@@ -265,12 +281,14 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       }
     }
   }
+
   String formatDecimal(String value) {
     if (value.contains('.')) {
       return double.parse(value).toStringAsFixed(2);
     }
-    return value;  // return as-is if no decimal point
+    return value; // return as-is if no decimal point
   }
+
   String getReadableTime(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
     String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
@@ -296,7 +314,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
 
     List<String> operators = ['+', '-', '×', '÷'];
 
-    switch(widget.gameMode) {
+    switch (widget.gameMode) {
       case GameMode.Addition:
         operator = '+';
         correctAnswer = number1 + number2;
@@ -311,15 +329,17 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
         break;
       case GameMode.Division:
         operator = '÷';
-        correctAnswer = (number1 / number2);  // If it's division, take the floor (integer part) of the division
+        correctAnswer = (number1 /
+            number2); // If it's division, take the floor (integer part) of the division
         break;
       case GameMode.Mix: // In case of 'All', pick a random operator
         operator = operators[rng.nextInt(operators.length)];
-        correctAnswer = calculateAnswer(operator, number1, number2);  // Define a function to calculate the answer based on the operator
+        correctAnswer = calculateAnswer(operator, number1,
+            number2); // Define a function to calculate the answer based on the operator
         break;
     }
 
-    options = generateOptions(correctAnswer);  // Generate four options
+    options = generateOptions(correctAnswer); // Generate four options
 
     setState(() {
       question = '$number1 $operator $number2';
@@ -328,8 +348,9 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     // After generating a new question, start the timer again
     startTimer();
   }
+
   dynamic calculateAnswer(String operator, int number1, int number2) {
-    switch(operator) {
+    switch (operator) {
       case '+':
         return number1 + number2;
       case '-':
@@ -343,24 +364,25 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
         return 0;
     }
   }
+
   List<String> generateOptions(dynamic correctAnswer) {
     var rng = Random();
     Set<String> optionsSet = {};
-    optionsSet.add(correctAnswer.toString());  // Add correct answer to options
+    optionsSet.add(correctAnswer.toString()); // Add correct answer to options
 
     // Check the format of the correct answer
     int decimalCount = 0;
     if (correctAnswer is double) {
       String correctStr = correctAnswer.toString();
       int dotIndex = correctStr.indexOf('.');
-      if(dotIndex != -1) {
+      if (dotIndex != -1) {
         decimalCount = correctStr.substring(dotIndex + 1).length;
       }
     }
 
     // Capture the least significant digit of the correct answer
     int lastDigitOfCorrectAnswer;
-    if(correctAnswer is int) {
+    if (correctAnswer is int) {
       lastDigitOfCorrectAnswer = correctAnswer % 10;
     } else {
       double lastDigitDouble = (correctAnswer * 10) % 10;
@@ -372,22 +394,26 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
 
       // Generate a number that ends with the same last digit about 50% of the time
       if (rng.nextBool()) {
-        if(decimalCount == 0) {
+        if (decimalCount == 0) {
           option = correctAnswer + rng.nextInt(21) - 10;
           option -= option % 10;
           option += lastDigitOfCorrectAnswer;
-        } else if(decimalCount == 1) {
-          option = (correctAnswer + rng.nextDouble() * 2 - 1).toStringAsFixed(1);
+        } else if (decimalCount == 1) {
+          option =
+              (correctAnswer + rng.nextDouble() * 2 - 1).toStringAsFixed(1);
         } else {
-          option = (correctAnswer + rng.nextDouble() * 2 - 1).toStringAsFixed(2);
+          option =
+              (correctAnswer + rng.nextDouble() * 2 - 1).toStringAsFixed(2);
         }
       } else {
-        if(decimalCount == 0) {
+        if (decimalCount == 0) {
           option = correctAnswer + rng.nextInt(21) - 10;
-        } else if(decimalCount == 1) {
-          option = (correctAnswer + rng.nextDouble() * 2 - 1).toStringAsFixed(1);
+        } else if (decimalCount == 1) {
+          option =
+              (correctAnswer + rng.nextDouble() * 2 - 1).toStringAsFixed(1);
         } else {
-          option = (correctAnswer + rng.nextDouble() * 2 - 1).toStringAsFixed(2);
+          option =
+              (correctAnswer + rng.nextDouble() * 2 - 1).toStringAsFixed(2);
         }
       }
 
@@ -399,20 +425,19 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     optionsList.shuffle();
     return optionsList;
   }
+
   void checkAnswer(String selectedOption, dynamic correctAnswer) {
     // Cancel the timer regardless of the correctness of the answer
     timer?.cancel();
     print('Lives: $lives');
 
-
     if (_canVibrate) {
       if (selectedOption == correctAnswer.toString()) {
-        Vibrate.feedback(FeedbackType.success);  // Vibrate on correct answer
+        Vibrate.feedback(FeedbackType.success); // Vibrate on correct answer
       } else {
-        Vibrate.feedback(FeedbackType.error);    // Vibrate on incorrect answer
+        Vibrate.feedback(FeedbackType.error); // Vibrate on incorrect answer
       }
     }
-
 
     if (selectedOption == correctAnswer.toString()) {
       _scoreController.forward().then((_) {
@@ -430,28 +455,25 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
         _backgroundColor = themeColors.errorColor;
       });
 
-
-
       Future.delayed(const Duration(milliseconds: 300), () {
         setState(() {
-          _backgroundColor = Colors.transparent; // Reset the color after a brief delay
+          _backgroundColor =
+              Colors.transparent; // Reset the color after a brief delay
         });
       });
 
       // If game isn't over, generate a new question
-      if (lives > 0){
+      if (lives > 0) {
         generateQuestion();
       } else {
         stopTotalGameTimer();
       }
-
-
     }
   }
 
   //time related
-  void updateRemainingTime(){
-    switch(widget.gameSpeed) {
+  void updateRemainingTime() {
+    switch (widget.gameSpeed) {
       case GameSpeed.fifteen:
         remainingTime = 15;
         break;
@@ -498,12 +520,12 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
         remainingTime = 1;
         break;
       default:
-      // Handle any unexpected cases here
+        // Handle any unexpected cases here
         break;
     }
   }
-  void startTimer() {
 
+  void startTimer() {
     updateRemainingTime();
 
     key = UniqueKey(); // Generate a new Key
@@ -511,8 +533,8 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     const oneSec = Duration(seconds: 1);
     timer = Timer.periodic(
       oneSec,
-          (Timer timer) => setState(
-            () {
+      (Timer timer) => setState(
+        () {
           if (remainingTime <= 0) {
             timer.cancel();
             endOfTimer();
@@ -523,27 +545,30 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       ),
     );
   }
+
   void endOfTimer() {
     Vibrate.feedback(FeedbackType.error);
-    if(lives > 1) {
+    if (lives > 1) {
       setState(() {
         lives--;
       });
       generateQuestion();
-    } else if (lives == 1) { // This condition will handle when lives are exactly 1
+    } else if (lives == 1) {
+      // This condition will handle when lives are exactly 1
       setState(() {
         lives = 0; // Ensure lives are set to 0
       });
       stopTotalGameTimer();
       timer?.cancel();
-    }
-    else {
+    } else {
       timer?.cancel();
     }
   }
+
   void stopTotalGameTimer() {
     totalGameTimer?.cancel();
   }
+
   void startTotalGameTimer() {
     totalGameTimer = Timer.periodic(Duration(seconds: 1), (timer) {
       setState(() {
@@ -554,7 +579,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
 
   //db functions
   void _saveGameData() async {
-    if (_nameController.text.trim().isNotEmpty && dataSaved == 0) {
+    if (_nameController.text.trim().isNotEmpty && dataSaved == 0 && score > 0) {
       // Local data saving logic
       Map<String, dynamic> row = {
         DatabaseHelper.columnName: _nameController.text,
@@ -570,17 +595,18 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       if (connectivityResult == ConnectivityResult.none) {
         // No internet connection
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Cannot connect to server'))
-        );
+            const SnackBar(content: Text('Cannot connect to server')));
         return;
       } else {
         // Firebase data saving logic
-        CollectionReference games = FirebaseFirestore.instance.collection('endlessModeGameData');
+        CollectionReference games =
+            FirebaseFirestore.instance.collection('endlessModeGameData');
         String? deviceInfo = await commonFunctions.getDeviceInfo();
         String deviceUID = await commonFunctions.getDeviceUUID();
 
         Map<String, dynamic> firebaseRow = {
-          'datetime': DateTime.now().toIso8601String(),  // Save the current date and time as a string in ISO format
+          'datetime': DateTime.now().toIso8601String(),
+          // Save the current date and time as a string in ISO format
           'deviceInfo': deviceInfo,
           'deviceUID': deviceUID,
           'name': _nameController.text,
@@ -596,6 +622,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     }
     canRevive = false;
   }
+
   _loadPlayerName() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? playerName = prefs.getString('playerName');
@@ -603,12 +630,15 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       _nameController.text = playerName ?? '';
     });
   }
+
   _savePlayerName(String name) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setString('playerName', name);
   }
+
   Future<void> _loadHighestScore() async {
-    final score = await DatabaseHelper.instance.queryHighestScore(widget.gameMode.toString());
+    final score = await DatabaseHelper.instance
+        .queryHighestScore(widget.gameMode.toString());
     setState(() {
       highestScore = score;
     });
@@ -616,270 +646,363 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
-
     themeColors = ThemeHelper(context, listen: false);
 
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: lives!= 0 ? AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: themeColors.iconColor, size: 30),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ) : null,
-      body: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        color: _backgroundColor,
-        child: Stack(
-          children: [
-            // Main game screen
-            Container(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Expanded(
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          Column(
-                            children: [
-                              // Timer Text
-                              // Total time elapsed display
-                              Center(
-                                child: Text(
-                                  'Time: ${getReadableTime(totalTime)}',
-                                  style: GoogleFonts.aBeeZee(
-                                    color: themeColors.textColor,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 20,
-                                  ),
-                                ),
-                              ),
-                              // Spacer for a gap between text and progress bar
-                              const SizedBox(height: 30),
-                              // Progress bar
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 30), // Padding for wider bar
-                                height: 10, // Height for progress bar
-                                child: TweenAnimationBuilder(
-                                  key: key,
-                                  tween: Tween(begin: 1.0, end: 0.0),
-                                  duration: Duration(seconds: remainingTime),
-                                  builder: (context, value, child) {
-                                    return LinearProgressIndicator(
-                                      value: value,
-                                      minHeight: 30, // Increase height of progress bar
-                                      backgroundColor: themeColors.progressBarBackground,
-                                      valueColor: AlwaysStoppedAnimation<Color>(themeColors.secondaryColor),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 30),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: List.generate(max(0, lives), (index) => Icon(Icons.favorite, color: themeColors.errorColor, size: 40)).toList(),
-                          ),
-                          const SizedBox(height: 30),
-                          Center(
-                            child: Text(
-                              'Score: $score',
-                              style: GoogleFonts.fredoka(color: themeColors.textColor, fontSize: 32),
-                            ),
-                          ),
-                          // Animated score pop-up
-                            FadeTransition(
-                            opacity: _scoreAnimation,
-                            child: Text(
-                              '+1',
-                              style: GoogleFonts.fredoka(color: themeColors.positiveColor, fontSize: 32),
-                            ),
-                          ),
-
-                          SizedBox(height: 30),
-                          Text(
-                            question.contains('÷') ? formatDecimal(question) : question,  // check if division is present in the question
-                            style: GoogleFonts.fredoka(fontSize: 50, color: themeColors.textColor),
-                          ),
-
-                          SizedBox(height: 30),
-                          GridView.count(
-                            shrinkWrap: true,
-                            crossAxisCount: 2,
-                            childAspectRatio: 2,
-                            padding: const EdgeInsets.all(20),
-                            mainAxisSpacing: 20,
-                            crossAxisSpacing: 20,
-                            children: <Widget>[
-                              AnimatedButton(formatDecimal(options[0]), onPressed: () => checkAnswer(options[0], correctAnswer)),
-                              AnimatedButton(formatDecimal(options[1]), onPressed: () => checkAnswer(options[1], correctAnswer)),
-                              AnimatedButton(formatDecimal(options[2]), onPressed: () => checkAnswer(options[2], correctAnswer)),
-                              AnimatedButton(formatDecimal(options[3]), onPressed: () => checkAnswer(options[3], correctAnswer)),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
+    return WillPopScope(
+      onWillPop: () async {
+        _saveGameData();
+        Navigator.pop(context, true);
+        return true;
+      },
+      child: FutureBuilder(
+        future: _initialization,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            return Stack(children: [
+              Container(
+                decoration: themeColors.currentTheme.backgroundDecoration(true),
+              ),
+              Scaffold(
+                extendBodyBehindAppBar: true,
+                appBar: lives != 0
+                    ? AppBar(
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  leading: IconButton(
+                    icon: Icon(Icons.arrow_back,
+                        color: themeColors.iconColor, size: 30),
+                    onPressed: () => Navigator.pop(context),
                   ),
-                ],
-              ),
-            ),
-            // Game Over overlay
-        if (lives == 0) ...[
-              BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                child: Container(
-                  color: themeColors.backdropBackgroundColor.withOpacity(0.4),
-                ),
-              ),
-              Center(
-                child: Container(
-                  width: MediaQuery.of(context).size.width * 0.6, // 80% of screen width
-                  child: Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    elevation: 5.0, // This gives shadow to the card
-                    child: Padding(
-                      padding: EdgeInsets.all(20),
-                      child: SingleChildScrollView(
+                )
+                    : null,
+                backgroundColor: Colors.transparent,
+                body: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  color: _backgroundColor,
+                  child: Stack(
+                    children: [
+                      // Main game screen
+                      Container(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: <Widget>[
-                            Text('Game Over', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: themeColors.errorColor, fontSize: 32)),
-                            SizedBox(height: 20),
-                            Text('Your Name', textAlign: TextAlign.center,),
-                            SizedBox(height: 10),
-                            Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12.0),
-                                border: Border.all(color: themeColors.primaryColor, width: 2.0),
-                                color: _nameController.text.isEmpty ? themeColors.errorColor : themeColors.tableSurroundColor,  // Check here
-                              ),
-                              child: TextField(
-                                controller: _nameController,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(fontSize: 20, color: themeColors.textColor),
-                                decoration: InputDecoration(
-                                  hintText: 'Name',
-                                  border: InputBorder.none,
-                                  contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                                  counterText: '',
-                                ),
-                                maxLength: 12,
-                                onChanged: (value) {
-                                  _savePlayerName(value);
-                                  setState(() {});
-                                },
-                              ),
-                            ),
-                            SizedBox(height: 20),
-                            Text('Your Score: $score', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: themeColors.textColor, fontSize: 24)),
-                            SizedBox(height: 20),
-                            Text('Best Score: $highestScore', textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: themeColors.textColor, fontSize: 24)),
-                            SizedBox(height: 30),
-                            if (canRevive == true && _rewardedAd != null && dataSaved == 0) ...[
-                              Material(
-                                elevation: 5.0,
-                                borderRadius: BorderRadius.circular(30),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        themeColors.positiveColorLight,
-                                        themeColors.positiveColorDark,
-                                      ],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                    borderRadius: BorderRadius.circular(30),
-                                  ),
-                                  child: InkWell(
-                                    onTap: () {
-                                      _showRewardedAd();
-                                    },
-                                    borderRadius: BorderRadius.circular(30),
-                                    child: Padding(
-                                      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Icon(Icons.play_arrow, color: themeColors.btnTextColor, size: 24),
-                                          SizedBox(width: 10),
-                                          Text(
-                                            'Revive',
-                                            style: GoogleFonts.fredoka(
-                                              color: themeColors.btnTextColor,
-                                              fontSize: 18,
+                            Expanded(
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: <Widget>[
+                                    Column(
+                                      children: [
+                                        // Timer Text
+                                        // Total time elapsed display
+                                        Center(
+                                          child: Text(
+                                            'Time: ${getReadableTime(totalTime)}',
+                                            style: GoogleFonts.aBeeZee(
+                                              color: themeColors.textColor,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 20,
                                             ),
                                           ),
-                                        ],
+                                        ),
+                                        // Spacer for a gap between text and progress bar
+                                        const SizedBox(height: 30),
+                                        // Progress bar
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 30),
+                                          // Padding for wider bar
+                                          height: 10,
+                                          // Height for progress bar
+                                          child: TweenAnimationBuilder(
+                                            key: key,
+                                            tween: Tween(begin: 1.0, end: 0.0),
+                                            duration: Duration(seconds: remainingTime),
+                                            builder: (context, value, child) {
+                                              return LinearProgressIndicator(
+                                                value: value,
+                                                minHeight: 30,
+                                                // Increase height of progress bar
+                                                backgroundColor:
+                                                themeColors.progressBarBackground,
+                                                valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                                    themeColors.secondaryColor),
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+
+                                    const SizedBox(height: 30),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: List.generate(
+                                          max(0, lives),
+                                              (index) => Icon(Icons.favorite,
+                                              color: themeColors.errorColor,
+                                              size: 40)).toList(),
+                                    ),
+                                    const SizedBox(height: 30),
+                                    Center(
+                                      child: Text(
+                                        'Score: $score',
+                                        style: GoogleFonts.fredoka(
+                                            color: themeColors.textColor, fontSize: 32),
                                       ),
                                     ),
-                                  ),
+                                    // Animated score pop-up
+                                    FadeTransition(
+                                      opacity: _scoreAnimation,
+                                      child: Text(
+                                        '+1',
+                                        style: GoogleFonts.fredoka(
+                                            color: themeColors.positiveColor,
+                                            fontSize: 32),
+                                      ),
+                                    ),
+
+                                    SizedBox(height: 30),
+                                    Container(
+                                      child: Text(
+                                        question.contains('÷')
+                                            ? formatDecimal(question)
+                                            : question,
+                                        // check if division is present in the question
+                                        style: GoogleFonts.fredoka(
+                                            fontSize: 60, color: themeColors.textColor),
+                                      ),
+                                    ),
+
+
+                                    SizedBox(height: 30),
+                                    GridView.count(
+                                      shrinkWrap: true,
+                                      crossAxisCount: 2,
+                                      childAspectRatio: 2,
+                                      padding: const EdgeInsets.all(20),
+                                      mainAxisSpacing: 20,
+                                      crossAxisSpacing: 20,
+                                      children: <Widget>[
+                                        AnimatedButton(formatDecimal(options[0]),
+                                            onPressed: () =>
+                                                checkAnswer(options[0], correctAnswer)),
+                                        AnimatedButton(formatDecimal(options[1]),
+                                            onPressed: () =>
+                                                checkAnswer(options[1], correctAnswer)),
+                                        AnimatedButton(formatDecimal(options[2]),
+                                            onPressed: () =>
+                                                checkAnswer(options[2], correctAnswer)),
+                                        AnimatedButton(formatDecimal(options[3]),
+                                            onPressed: () =>
+                                                checkAnswer(options[3], correctAnswer)),
+                                      ],
+                                    ),
+                                  ],
                                 ),
                               ),
-                              SizedBox(height: 20),
-                            ],
-                            AnimatedButton(
-                              'Retry',
-                              onPressed: () {
-                                _saveGameData();
-                                _showInterstitialAd();
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => GameScreen(
-                                      gameMode: widget.gameMode,
-                                      gameSpeed: GameSpeed.fifteen,
-                                    ),
-                                  ),
-                                ).then((_) {
-                                  setState(() {});
-                                });
-                              },
-                              verticalPadding: 10.0,
                             ),
-                            AnimatedButton(
-                              'Wall of Fame',
-                              onPressed: () {
-                                _saveGameData();
-                                Navigator.of(context).push(MaterialPageRoute(builder: (context) => WallOfFameScreen(
-                                  gameMode: widget.gameMode,
-                                ))).then((_) {
-                                  setState(() {});
-                                });
-                              },
-                              verticalPadding: 10.0,
-                            ),
-                            AnimatedButton(
-                              'Back',
-                              onPressed: () {
-                                _saveGameData();
-                                _showInterstitialAd();
-                                Navigator.of(context).push(MaterialPageRoute(builder: (context) => EndlessModeScreen())).then((_) {
-                                  setState(() {});
-                                });
-                              },
-                              verticalPadding: 10.0,
-                            )
                           ],
                         ),
                       ),
-                    ),
+                      // Game Over overlay
+                      if (lives == 0) ...[
+                        BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                          child: Container(
+                            color: themeColors.backdropBackgroundColor.withOpacity(0.4),
+                          ),
+                        ),
+                        Center(
+                          child: Container(
+                            width: MediaQuery.of(context).size.width *
+                                0.6, // 80% of screen width
+                            child: Card(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              elevation: 5.0, // This gives shadow to the card
+                              child: Padding(
+                                padding: EdgeInsets.all(20),
+                                child: SingleChildScrollView(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    children: <Widget>[
+                                      Text('Game Over',
+                                          textAlign: TextAlign.center,
+                                          style: GoogleFonts.fredoka(
+                                              color: themeColors.errorColor,
+                                              fontSize: 32)),
+                                      SizedBox(height: 20),
+                                      Text(
+                                        'Your Name',
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      SizedBox(height: 10),
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(12.0),
+                                          border: Border.all(
+                                              color: themeColors.primaryColor,
+                                              width: 2.0),
+                                          color: _nameController.text.isEmpty
+                                              ? themeColors.errorColor
+                                              : themeColors
+                                              .tableSurroundColor, // Check here
+                                        ),
+                                        child: TextField(
+                                          controller: _nameController,
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                              fontSize: 20,
+                                              color: themeColors.textColor),
+                                          decoration: InputDecoration(
+                                            hintText: 'Name',
+                                            border: InputBorder.none,
+                                            contentPadding: EdgeInsets.symmetric(
+                                                horizontal: 10, vertical: 5),
+                                            counterText: '',
+                                          ),
+                                          maxLength: 12,
+                                          onChanged: (value) {
+                                            _savePlayerName(value);
+                                            setState(() {});
+                                          },
+                                        ),
+                                      ),
+                                      SizedBox(height: 20),
+                                      Text('Your Score: $score',
+                                          textAlign: TextAlign.center,
+                                          style: GoogleFonts.fredoka(
+                                              color: themeColors.textColor,
+                                              fontSize: 24)),
+                                      SizedBox(height: 20),
+                                      Text('Best Score: $highestScore',
+                                          textAlign: TextAlign.center,
+                                          style: GoogleFonts.fredoka(
+                                              color: themeColors.textColor,
+                                              fontSize: 24)),
+                                      SizedBox(height: 30),
+                                      if (canRevive == true &&
+                                          _rewardedAd != null &&
+                                          dataSaved == 0) ...[
+                                        Material(
+                                          elevation: 5.0,
+                                          borderRadius: BorderRadius.circular(30),
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              gradient: LinearGradient(
+                                                colors: [
+                                                  themeColors.positiveColorLight,
+                                                  themeColors.positiveColorDark,
+                                                ],
+                                                begin: Alignment.topLeft,
+                                                end: Alignment.bottomRight,
+                                              ),
+                                              borderRadius: BorderRadius.circular(30),
+                                            ),
+                                            child: InkWell(
+                                              onTap: () {
+                                                _showRewardedAd();
+                                              },
+                                              borderRadius: BorderRadius.circular(30),
+                                              child: Padding(
+                                                padding: EdgeInsets.symmetric(
+                                                    horizontal: 10, vertical: 10),
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                                  children: [
+                                                    Icon(Icons.play_arrow,
+                                                        color: themeColors.btnTextColor,
+                                                        size: 24),
+                                                    SizedBox(width: 10),
+                                                    Text(
+                                                      'Revive',
+                                                      style: GoogleFonts.fredoka(
+                                                        color: themeColors.btnTextColor,
+                                                        fontSize: 18,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(height: 20),
+                                      ],
+                                      AnimatedButton(
+                                        'Retry',
+                                        onPressed: () {
+                                          _saveGameData();
+                                          _showInterstitialAd();
+                                          Navigator.pushReplacement(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => GameScreen(
+                                                gameMode: widget.gameMode,
+                                                gameSpeed: GameSpeed.fifteen,
+                                              ),
+                                            ),
+                                          ).then((_) {
+                                            setState(() {});
+                                          });
+                                        },
+                                        verticalPadding: 10.0,
+                                      ),
+                                      AnimatedButton(
+                                        'Wall of Fame',
+                                        onPressed: () {
+                                          _saveGameData();
+                                          Navigator.of(context)
+                                              .push(MaterialPageRoute(
+                                              builder: (context) =>
+                                                  WallOfFameScreen(
+                                                    gameMode: widget.gameMode,
+                                                  )))
+                                              .then((_) {
+                                            setState(() {});
+                                          });
+                                        },
+                                        verticalPadding: 10.0,
+                                      ),
+                                      AnimatedButton(
+                                        'Back',
+                                        onPressed: () {
+                                          _saveGameData();
+                                          _showInterstitialAd();
+                                          Navigator.of(context)
+                                              .push(MaterialPageRoute(
+                                              builder: (context) =>
+                                                  EndlessModeScreen()))
+                                              .then((_) {
+                                            setState(() {});
+                                          });
+                                        },
+                                        verticalPadding: 10.0,
+                                      )
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ]
+                    ],
                   ),
                 ),
               ),
-            ]
-          ],
-        ),
+            ]);// Your actual widget here
+          }
+          if (snapshot.hasError) {
+            return Scaffold(body: Center(child: CircularProgressIndicator()));  // Replace with your loading screen
+          }
+          return Scaffold(body: Center(child: CircularProgressIndicator()));  // Replace with your loading screen
+        },
       ),
     );
   }
