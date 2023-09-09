@@ -1,6 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:technomaths/config/extended_theme.dart';
 
+BoxDecoration getBackgroundDecoration(bool applyOpacity) {
+  return BoxDecoration(
+    image: DecorationImage(
+      image: AssetImage("assets/background.jpg"),
+      fit: BoxFit.cover,
+      colorFilter: applyOpacity
+          ? ColorFilter.mode(
+        Colors.black.withOpacity(0.4),
+        BlendMode.dstATop,
+      )
+          : null,
+    ),
+  );
+}
+
 final CustomTheme lightTheme = CustomTheme(
   themeData: ThemeData(
     primaryColor: Colors.deepPurple,
@@ -23,8 +38,17 @@ final CustomTheme lightTheme = CustomTheme(
   positiveColorDark: Colors.green[700]!,
   backdropBackgroundColor: Colors.black,
   bestScoreBackground: Colors.amber[100]!,
-  buttonIndicatorColor: Colors.yellowAccent,
+  buttonIndicatorColor: Colors.amberAccent,
   tableSurroundColor: Colors.white,
+  backgroundDecoration: (_) => BoxDecoration(color: Colors.white),
+  appBarBackgroundColor: Colors.deepPurple,
+  appBarBackgroundDecoration: BoxDecoration(
+    gradient: LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [Colors.deepPurple, Colors.blueAccent],
+    ),
+  ),
 );
 
 final CustomTheme darkTheme = CustomTheme(
@@ -52,8 +76,13 @@ final CustomTheme darkTheme = CustomTheme(
   positiveColorDark: Colors.green[800]!,
   backdropBackgroundColor: Colors.black,  // Pure black backdrop
   bestScoreBackground: Colors.purple[800]!,  // Deep shade for the best score background
-  buttonIndicatorColor: Colors.amber[700]!,  // A darker shade of amber for button indicator
-  tableSurroundColor: Colors.grey[850]!, // Very dark grey for table surrounds
+  buttonIndicatorColor: Colors.purple,  // A darker shade of amber for button indicator
+  tableSurroundColor: Colors.grey[800]!, // Very dark grey for table surrounds
+  backgroundDecoration: getBackgroundDecoration,
+  appBarBackgroundColor: Colors.transparent,
+  appBarBackgroundDecoration: BoxDecoration(
+    color: Colors.transparent,
+  ),
 );
 
 

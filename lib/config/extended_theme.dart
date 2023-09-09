@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+typedef BoxDecorationBuilder = BoxDecoration Function(bool applyOpacity);
 
 class CustomTheme {
   final ThemeData themeData;
@@ -16,6 +17,9 @@ class CustomTheme {
   final Color bestScoreBackground;
   final Color buttonIndicatorColor;
   final Color tableSurroundColor;
+  final BoxDecorationBuilder backgroundDecoration;
+  final Color appBarBackgroundColor;
+  final BoxDecoration? appBarBackgroundDecoration;
 
   CustomTheme({
     required this.themeData,
@@ -33,5 +37,8 @@ class CustomTheme {
     this.bestScoreBackground = Colors.amber,
     this.buttonIndicatorColor = Colors.yellowAccent,
     this.tableSurroundColor = Colors.white,
+    required this.backgroundDecoration,
+    required this.appBarBackgroundColor,
+    this.appBarBackgroundDecoration,
   });
 }

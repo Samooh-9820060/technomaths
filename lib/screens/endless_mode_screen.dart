@@ -57,76 +57,79 @@ class EndlessModeScreen extends StatelessWidget {
           )
         ],
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'Choose Endless Mode',
-              style: GoogleFonts.fredoka(fontSize: 30, color: themeColors.headerColor), // Use Google font here
-            ),
-            const SizedBox(height: 50),
-            AnimatedButton('Addition', onPressed: () async {
-              await performVibration();
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => GameScreen(
-                      gameMode: GameMode.Addition,
-                      gameSpeed: GameSpeed.fifteen,
+      body: Container(
+        decoration: themeColors.currentTheme.backgroundDecoration(false),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Text(
+                'Choose Endless Mode',
+                style: GoogleFonts.fredoka(fontSize: 30, color: themeColors.headerColor), // Use Google font here
+              ),
+              const SizedBox(height: 50),
+              AnimatedButton('Addition', onPressed: () async {
+                await performVibration();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => GameScreen(
+                        gameMode: GameMode.Addition,
+                        gameSpeed: GameSpeed.fifteen,
+                    ),
                   ),
-                ),
-              );
-            }),
-            AnimatedButton('Subtraction', onPressed: () async {
-              await performVibration();
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => GameScreen(
-                      gameMode: GameMode.Subtraction,
-                      gameSpeed: GameSpeed.fifteen,
+                );
+              }),
+              AnimatedButton('Subtraction', onPressed: () async {
+                await performVibration();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => GameScreen(
+                        gameMode: GameMode.Subtraction,
+                        gameSpeed: GameSpeed.fifteen,
+                    ),
                   ),
-                ),
-              );
-            }),
-            AnimatedButton('Multiplication', onPressed: () async {
-              await performVibration();
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => GameScreen(
-                      gameMode: GameMode.Multiplication,
-                      gameSpeed: GameSpeed.fifteen,
+                );
+              }),
+              AnimatedButton('Multiplication', onPressed: () async {
+                await performVibration();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => GameScreen(
+                        gameMode: GameMode.Multiplication,
+                        gameSpeed: GameSpeed.fifteen,
+                    ),
                   ),
-                ),
-              );
-            }),
-            AnimatedButton('Division', onPressed: () async {
-              await performVibration();
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => GameScreen(
-                      gameMode: GameMode.Division,
-                      gameSpeed: GameSpeed.fifteen,
+                );
+              }),
+              AnimatedButton('Division', onPressed: () async {
+                await performVibration();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => GameScreen(
+                        gameMode: GameMode.Division,
+                        gameSpeed: GameSpeed.fifteen,
+                    ),
                   ),
-                ),
-              );
-            }),
-            AnimatedButton('Mix', onPressed: () async {
-              await performVibration();
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => GameScreen(
-                      gameMode: GameMode.Mix,
-                      gameSpeed: GameSpeed.fifteen,
+                );
+              }),
+              AnimatedButton('Mix', onPressed: () async {
+                await performVibration();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => GameScreen(
+                        gameMode: GameMode.Mix,
+                        gameSpeed: GameSpeed.fifteen,
+                    ),
                   ),
-                ),
-              );
-            }),
-          ],
+                );
+              }),
+            ],
+          ),
         ),
       ),
     );
