@@ -1,16 +1,25 @@
-# technomaths
+# TechnoMaths
 
-Fun math game
+Dive into the world of TechnoMaths—a captivating mathematical game designed to challenge and hone your arithmetic skills. Whether you're a math novice or enthusiast, this game offers a rewarding experience for all.
 
-## Getting Started
+## Screenshots
 
-This project is a starting point for a Flutter application.
+<p float="left">
+  <img src="./screenshots/phone/photo_2023-09-09_23-31-55.jpg" width="170" />
+  <img src="./screenshots/phone/photo_2023-09-09_23-31-56.jpg" width="170" /> 
+  <img src="./screenshots/phone/photo_2023-09-09_23-31-57.jpg" width="170" />
+  <img src="./screenshots/phone/photo_2023-09-09_23-31-58.jpg" width="170" />
+  <img src="./screenshots/phone/photo_2023-09-09_23-31-59.jpg" width="170" />
+</p>
 
-A few resources to get you started if this is your first Flutter project:
+## Key Features
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- **Diverse Game Modes**: Master addition, subtraction, multiplication, or take on the all-in-one mode for an eclectic challenge.
+- **Adaptive Difficulty**: Experience a balanced level of difficulty that scales with your progress.
+- **Leaderboards**: Compete globally and aim for the top!
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Download the Game
+
+Ready for a math challenge? [Download TechnoMaths on the Google Play Store](https://play.google.com/store/apps/details?id=com.techNova.technomaths.technomaths).
+
+Thank you for playing TechnoMaths! Your feedback is invaluable as we continue to improve and add new features. Stay tuned for updates!
