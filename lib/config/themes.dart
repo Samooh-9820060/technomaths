@@ -64,7 +64,7 @@ final CustomTheme darkTheme = CustomTheme(
     //canvasColor: Colors.black,
     // add other theme data you need
   ),
-  textColor: Colors.tealAccent[400]!,  // Brighter teal accent for text
+  textColor: Colors.white,  // Brighter teal accent for text
   btnTextColor: Colors.white,
   headerColor: Colors.tealAccent[400]!,
   iconColor: Colors.tealAccent[400]!,
