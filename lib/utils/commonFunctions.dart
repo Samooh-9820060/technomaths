@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:notification_permissions/notification_permissions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -137,7 +138,7 @@ class commonFunctions {
     }
   }
 
-  static Future<void> setDefaultPreferences() async {
+  static Future<void> setDefaultPreferences(BuildContext context) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     bool? isFirstRun = prefs.getBool('isFirstRun');
 
@@ -149,12 +150,20 @@ class commonFunctions {
       await prefs.setBool('isNotificationsOn', areNotificationsPermitted);
     }
 
+    // Check the device's theme setting
+    Brightness deviceBrightness = MediaQuery.of(context).platformBrightness;
+
+    print(deviceBrightness);
+
+    String initialTheme = (deviceBrightness == Brightness.dark) ? 'dark' : 'light';
+
+    print(initialTheme);
+
     if (isFirstRun == null || isFirstRun) {
       await prefs.setBool('isVibrationOn', true);
       await prefs.setBool('isNotificationsOn', areNotificationsPermitted);
       await prefs.setBool('isPersonalizedAdsOn', true);
-      await prefs.setString('appTheme', 'light');
-      // await prefs.setBool('isDarkTheme', true); // Uncomment this if you need it
+      await prefs.setString('appTheme', initialTheme);  // Set based on device setting
       await prefs.setBool('isFirstRun', false);
     }
   }

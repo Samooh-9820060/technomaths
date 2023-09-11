@@ -63,6 +63,9 @@ class _GameScreenState extends State<GameScreen>
   late Animation<double> _scoreAnimation;
   TextEditingController _nameController = TextEditingController();
   late var themeColors;
+  DocumentReference? savedDocument;
+  int? savedRowId;
+
 
   @override
   void initState() {
@@ -429,7 +432,6 @@ class _GameScreenState extends State<GameScreen>
   void checkAnswer(String selectedOption, dynamic correctAnswer) {
     // Cancel the timer regardless of the correctness of the answer
     timer?.cancel();
-    print('Lives: $lives');
 
     if (_canVibrate) {
       if (selectedOption == correctAnswer.toString()) {
@@ -467,6 +469,11 @@ class _GameScreenState extends State<GameScreen>
         generateQuestion();
       } else {
         stopTotalGameTimer();
+      }
+
+      //if game is over save data
+      if (lives == 0) {
+        _saveGameData();
       }
     }
   }
@@ -587,8 +594,7 @@ class _GameScreenState extends State<GameScreen>
         DatabaseHelper.columnGameMode: widget.gameMode.toString(),
         DatabaseHelper.columnTimeElapsed: getReadableTime(totalTime)
       };
-
-      await DatabaseHelper.instance.insert(row);
+      savedRowId = await DatabaseHelper.instance.insert(row);
 
       var connectivityResult = await (Connectivity().checkConnectivity());
 
@@ -615,12 +621,48 @@ class _GameScreenState extends State<GameScreen>
           'timeElapsed': getReadableTime(totalTime),
         };
 
-        await games.add(firebaseRow);
+        savedDocument = await games.add(firebaseRow);
       }
-
       dataSaved = 1;
     }
-    canRevive = false;
+    else if (_nameController.text.trim().isNotEmpty && dataSaved == 1 && score > 0)
+    {
+      print('second save');
+      print(savedRowId);
+      //local db update logic
+      if (savedRowId != null) {
+        // New data to update
+        Map<String, dynamic> updatedRow = {
+          DatabaseHelper.columnScore: score,  // The new score
+          DatabaseHelper.columnTimeElapsed: getReadableTime(totalTime),  // The new total time
+        };
+
+        // Update the row using the saved row ID
+        await DatabaseHelper.instance.update(savedRowId!, updatedRow);
+
+      } else {
+        print("No row to update"); // Handle this case as needed
+      }
+
+      print('saved document:' +savedDocument.toString());
+      //firebase update logic
+      if (savedDocument != null) {
+        // New data to update
+        String deviceUID = await commonFunctions.getDeviceUUID();
+        Map<String, dynamic> updatedData = {
+          'score': score, // The new score
+          'timeElapsed': getReadableTime(totalTime),
+          'deviceUID': deviceUID,
+        };
+        print('updated data:' +updatedData.toString());
+        // Update the document using the saved DocumentReference
+        await savedDocument?.update(updatedData);
+        print('done');
+      } else {
+        print("No document to update"); // Handle this case as needed
+      }
+    }
+    //canRevive = false;
   }
 
   _loadPlayerName() async {
@@ -937,7 +979,6 @@ class _GameScreenState extends State<GameScreen>
                                       AnimatedButton(
                                         'Retry',
                                         onPressed: () {
-                                          _saveGameData();
                                           _showInterstitialAd();
                                           Navigator.pushReplacement(
                                             context,
@@ -956,7 +997,6 @@ class _GameScreenState extends State<GameScreen>
                                       AnimatedButton(
                                         'Wall of Fame',
                                         onPressed: () {
-                                          _saveGameData();
                                           Navigator.of(context)
                                               .push(MaterialPageRoute(
                                               builder: (context) =>
@@ -972,7 +1012,6 @@ class _GameScreenState extends State<GameScreen>
                                       AnimatedButton(
                                         'Back',
                                         onPressed: () {
-                                          _saveGameData();
                                           _showInterstitialAd();
                                           Navigator.of(context)
                                               .push(MaterialPageRoute(
