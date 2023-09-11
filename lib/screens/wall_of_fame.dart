@@ -132,7 +132,8 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
               _createInterstitialAd();
             }
           },
-        ));
+        )
+    );
   }
 
   void showAd() {

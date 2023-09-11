@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "55457527417-6o8mmfnr9pamtsmrs9puhv8tnfo5cbef.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.techNova.technomaths.technomaths",
+            "certificate_hash": "e425646f8d1aec81ea7b66bff55b41a93bd4ec3c"
+          }
+        },
+        {
           "client_id": "55457527417-peo6vdbo7h8c1tcm3bqpfuckd7ab0o5f.apps.googleusercontent.com",
           "client_type": 3
         }

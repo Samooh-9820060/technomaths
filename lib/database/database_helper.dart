@@ -53,6 +53,18 @@ class DatabaseHelper {
     return await db.insert(table, row);
   }
 
+  Future<int> update(int id, Map<String, dynamic> row) async {
+    Database db = await instance.database;
+
+    return await db.update(
+      table,
+      row,
+      where: '$columnId = ?',
+      whereArgs: [id],
+    );
+  }
+
+
   Future<List<Map<String, dynamic>>> queryAllRows() async {
     Database db = await instance.database;
     return await db.query(table);
