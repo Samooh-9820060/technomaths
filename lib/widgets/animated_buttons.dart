@@ -32,9 +32,7 @@ class AnimatedButton extends StatelessWidget {
         ),
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
-            padding: EdgeInsets.symmetric(horizontal: 30, vertical: verticalPadding), // Reduced padding
-            primary: Colors.transparent, // This will ensure the gradient shows
-            onPrimary: themeColors.btnTextColorReverse,
+            foregroundColor: themeColors.btnTextColorReverse, backgroundColor: Colors.transparent, padding: EdgeInsets.symmetric(horizontal: 30, vertical: verticalPadding),
             shadowColor: Colors.transparent, // No shadow since we already have elevation from the container
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),

@@ -234,7 +234,7 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
         .where('gameMode', isEqualTo: selectedMode.toString())
         .count()
         .get();
-    totalCount = countSnapshot.count;
+    totalCount = countSnapshot.count ?? 0;
 
     Query query = FirebaseFirestore.instance
         .collection('endlessModeGameData')
@@ -323,10 +323,14 @@ class _WallOfFameScreenState extends State<WallOfFameScreen>
         .count()
         .get();
 
+    int scoresHigherThanGivenValue = scoresHigherThanGiven.count ?? 0;
+    int scoresEqualButFasterValue = scoresEqualButFaster.count ?? 0;
+    int scoresExactlyEqualTimeValue = scoresExactlyEqualTime.count ?? 0;
+
     // The rank will be the sum of scoresHigherThanGiven and scoresEqualButFaster minus scoresExactlyEqualTime plus one (1-based ranking)
-    int rank = scoresHigherThanGiven.count +
-        scoresEqualButFaster.count -
-        scoresExactlyEqualTime.count +
+    int rank = scoresHigherThanGivenValue +
+        scoresEqualButFasterValue -
+        scoresExactlyEqualTimeValue +
         1;
 
     return rank;

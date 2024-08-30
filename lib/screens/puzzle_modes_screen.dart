@@ -9,10 +9,11 @@ import 'package:technomaths/screens/game_screen.dart';
 import 'package:technomaths/config/game_mode.dart';
 import 'package:technomaths/config/game_speed.dart';
 import 'home_screen.dart';
+import 'math_crossword_puzzle.dart';
 
 
-class EndlessModeScreen extends StatelessWidget {
-  const EndlessModeScreen({Key? key}) : super(key: key);
+class PuzzleModesScreen extends StatelessWidget {
+  const PuzzleModesScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -32,12 +33,13 @@ class EndlessModeScreen extends StatelessWidget {
             );
           },
         ),
-        actions: [
+        /*actions: [
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 10.0), // Adjust the horizontal padding as needed
             child: IconButton(
               icon: FaIcon(FontAwesomeIcons.trophy, color: themeColors.iconColor, size: 30),
               onPressed: () async {
+                await performVibration();
                 Navigator.of(context).push(MaterialPageRoute(
                   builder: (context) => WallOfFameScreen(
                     gameMode: GameMode.Addition,
@@ -46,7 +48,7 @@ class EndlessModeScreen extends StatelessWidget {
               },
             ),
           )
-        ],
+        ],*/
       ),
       body: Container(
         decoration: themeColors.currentTheme.backgroundDecoration(false),
@@ -55,62 +57,15 @@ class EndlessModeScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               Text(
-                'Choose Endless Mode',
+                'Choose Puzzle Type',
                 style: GoogleFonts.fredoka(fontSize: 30, color: themeColors.headerColor), // Use Google font here
               ),
               const SizedBox(height: 50),
-              AnimatedButton('Addition', onPressed: () async {
+              AnimatedButton('Math Crossword', onPressed: () async {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => GameScreen(
-                        gameMode: GameMode.Addition,
-                        gameSpeed: GameSpeed.fifteen,
-                    ),
-                  ),
-                );
-              }),
-              AnimatedButton('Subtraction', onPressed: () async {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => GameScreen(
-                        gameMode: GameMode.Subtraction,
-                        gameSpeed: GameSpeed.fifteen,
-                    ),
-                  ),
-                );
-              }),
-              AnimatedButton('Multiplication', onPressed: () async {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => GameScreen(
-                        gameMode: GameMode.Multiplication,
-                        gameSpeed: GameSpeed.fifteen,
-                    ),
-                  ),
-                );
-              }),
-              AnimatedButton('Division', onPressed: () async {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => GameScreen(
-                        gameMode: GameMode.Division,
-                        gameSpeed: GameSpeed.fifteen,
-                    ),
-                  ),
-                );
-              }),
-              AnimatedButton('Mix', onPressed: () async {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => GameScreen(
-                        gameMode: GameMode.Mix,
-                        gameSpeed: GameSpeed.fifteen,
-                    ),
+                    builder: (context) => MathCrosswordPuzzleSettings(),
                   ),
                 );
               }),

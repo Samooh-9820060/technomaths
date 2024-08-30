@@ -1,19 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:technomaths/config/ThemeHelper.dart';
-import 'package:technomaths/config/extended_theme.dart';
-import 'package:technomaths/screens/levels_screen.dart';
+import 'package:technomaths/screens/puzzle_modes_screen.dart';
 import 'package:technomaths/screens/settings.dart';
 import 'package:technomaths/utils/commonFunctions.dart';
 import 'package:technomaths/widgets/animated_buttons.dart';
 import 'package:flutter/services.dart';
 import 'package:technomaths/screens/endless_mode_screen.dart';
-import 'package:technomaths/config/extended_theme.dart';
-import '../config/theme_notifier.dart';
-import '../config/themes.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -123,14 +117,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-
-  Future<void> performVibration() async {
-    bool canVibrate = await commonFunctions.checkVibrationSupport();
-    if (canVibrate) {
-      Vibrate.feedback(FeedbackType.medium); // You can adjust the feedback type as per your preference.
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final themeColors = ThemeHelper(context);
@@ -154,10 +140,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               }),*/
               AnimatedButton('Endless', onPressed: () async {
-                await performVibration();
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => EndlessModeScreen()),
+                );
+              }),
+              AnimatedButton('Puzzle Modes', onPressed: () async {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => PuzzleModesScreen()),
                 );
               }),
               //AnimatedButton('Levels', onPressed: () {
@@ -169,7 +160,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 await notificationService.initialize();
               }),*/
               AnimatedButton('Settings', onPressed: () async {
-                await performVibration();
                 // Settings code
                 Navigator.push(
                   context,
@@ -177,7 +167,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               }),
               AnimatedButton('Quit', onPressed: () async {
-                await performVibration();
                 SystemNavigator.pop();
               }),
             ],

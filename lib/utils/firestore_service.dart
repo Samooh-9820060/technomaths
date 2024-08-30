@@ -69,7 +69,15 @@ class FirestoreService {
         .get();
 
     // The rank will be the sum of scoresHigherThanGiven and scoresEqualButFaster minus scoresExactlyEqualTime plus one (1-based ranking)
-    int rank = scoresHigherThanGiven.count + scoresEqualButFaster.count - scoresExactlyEqualTime.count + 1;
+    int scoresHigherThanGivenValue = scoresHigherThanGiven.count ?? 0;
+    int scoresEqualButFasterValue = scoresEqualButFaster.count ?? 0;
+    int scoresExactlyEqualTimeValue = scoresExactlyEqualTime.count ?? 0;
+
+    // The rank will be the sum of scoresHigherThanGiven and scoresEqualButFaster minus scoresExactlyEqualTime plus one (1-based ranking)
+    int rank = scoresHigherThanGivenValue +
+        scoresEqualButFasterValue -
+        scoresExactlyEqualTimeValue +
+        1;
 
     return rank;
   }
@@ -88,7 +96,7 @@ class FirestoreService {
         .collection('notificationMessages')
         .count()
         .get();
-    int totalCount = countSnapshot.count;
+    int totalCount = countSnapshot.count ?? 0;
 
     // If no messages are found, return a default message
     if (totalCount == 0) {

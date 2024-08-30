@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_vibrate/flutter_vibrate.dart';
-import 'package:technomaths/config/ThemeHelper.dart';
 import 'package:technomaths/utils/commonFunctions.dart';
 
 class lvl1 extends StatefulWidget {
@@ -10,13 +8,6 @@ class lvl1 extends StatefulWidget {
 
 class _lvl1State extends State<lvl1> {
   bool _showQuiz = false;
-
-  Future<void> performVibration() async {
-    bool canVibrate = await commonFunctions.checkVibrationSupport();
-    if (canVibrate) {
-      Vibrate.feedback(FeedbackType.medium);
-    }
-  }
 
   Widget futuristicButton(
       {required String label,
@@ -28,7 +19,7 @@ class _lvl1State extends State<lvl1> {
           style: TextStyle(
               fontFamily: 'Orbitron', fontSize: 16, color: Colors.white)),
       style: ElevatedButton.styleFrom(
-        primary: color,
+        backgroundColor: color,
         padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       ),

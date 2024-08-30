@@ -80,7 +80,7 @@ class Start extends StatelessWidget {
                           ),
                         ),
                         style: ElevatedButton.styleFrom(
-                          primary: themeHelper.buttonIndicatorColor,
+                          backgroundColor: themeHelper.buttonIndicatorColor,
                           padding: EdgeInsets.symmetric(vertical: 20, horizontal: 40),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30),

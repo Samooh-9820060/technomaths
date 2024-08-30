@@ -4,7 +4,6 @@ import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -433,14 +432,6 @@ class _GameScreenState extends State<GameScreen>
     // Cancel the timer regardless of the correctness of the answer
     timer?.cancel();
 
-    if (_canVibrate) {
-      if (selectedOption == correctAnswer.toString()) {
-        Vibrate.feedback(FeedbackType.success); // Vibrate on correct answer
-      } else {
-        Vibrate.feedback(FeedbackType.error); // Vibrate on incorrect answer
-      }
-    }
-
     if (selectedOption == correctAnswer.toString()) {
       _scoreController.forward().then((_) {
         _scoreController.reverse();
@@ -554,7 +545,6 @@ class _GameScreenState extends State<GameScreen>
   }
 
   void endOfTimer() {
-    Vibrate.feedback(FeedbackType.error);
     if (lives > 1) {
       setState(() {
         lives--;
